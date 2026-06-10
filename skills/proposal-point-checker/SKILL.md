@@ -1,7 +1,7 @@
-# bid-invalid-clause-extractor
+# proposal-point-checker
 
-Extract high-risk invalidation clauses from tender documents.
+According to the provided audit point list, perform item-by-item evidence positioning, requirement alignment, source tracing, and check prompts for the bid documents.
 
 ## Configuration
 
-TBD
+Refer to `templates/io-contract.md` for the I/O contract.
