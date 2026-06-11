@@ -4,7 +4,7 @@
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/BidDeer/biddeer-skills.git
+   git clone https://github.com/TheRootLab/BidDeer-skills.git
    ```
 2. Locate the skill you want to use in the `skills/` directory.
 3. Link or copy the skill directory to your Agent tool's skills folder.

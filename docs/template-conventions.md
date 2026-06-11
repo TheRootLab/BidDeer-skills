@@ -10,7 +10,7 @@ The primary contract should be named `io-contract.md`.
 
 1. **Input Schema**: Define exactly what data (and in what format) the skill expects.
 2. **Output Schema**: Define exactly what the AI should produce.
-3. **Enumerations**: Define status codes or labels (e.g., Compliant, Non-Compliant).
+3. **Enumerations**: Define status codes or labels (e.g., Evidence status labels, such as 明确证据、疑似证据、冲突证据、未定位到证据、证据不足、无法判断).
 4. **Safety Boundaries**: Explicit instructions for the AI to handle sensitive data.
 
 ## Why Local Templates?
