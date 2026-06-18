@@ -161,8 +161,41 @@ This package includes:
 - `examples/sample_checklist.csv`: a small synthetic checklist.
 - `examples/bridge_adapter_template.py`: a template for implementing an external reasoning adapter.
 - `examples/generate_sample_docx.py`: a helper that can generate a minimal synthetic DOCX for local experimentation when `python-docx` is available.
+- `examples/sample_judgments.json`: a minimal example of reasoning judgments.
 
 The examples are synthetic and do not use real bidding documents.
+
+## Quick Start (Runnable Example)
+
+1. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Generate a synthetic proposal DOCX**:
+   ```bash
+   python examples/generate_sample_docx.py
+   ```
+   This will create `sample_proposal.docx` in your current directory.
+
+3. **Step 1: Retrieve candidate evidence**:
+   ```bash
+   python -m core.cli retrieve \
+       --csv examples/sample_checklist.csv \
+       --docx sample_proposal.docx \
+       --out candidates.json
+   ```
+
+4. **Step 2: Generate report using sample judgments**:
+   ```bash
+   python -m core.cli report \
+       --candidates candidates.json \
+       --judgments examples/sample_judgments.json \
+       --out report.md
+   ```
+
+5. **View the result**:
+   Open `report.md` to see the generated review report!
 
 ## Development Boundary For This Package Stage
 

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "proposal-point-checker.judgments.v0.1",
+  "judgments": [
+    {
+      "itemId": "QUAL-01",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "Found required ISO 9001 quality management system certification.",
+      "judgmentBasis": "Matches exact requirement in checklist QUAL-01.",
+      "manualCheckPrompt": "Please verify if the certification date is valid.",
+      "referencedEvidenceIndices": [0]
+    }
+  ]
+}
