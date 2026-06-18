@@ -1,0 +1,31 @@
+{
+  "name": "proposal-point-checker",
+  "displayName": "Proposal Point Checker",
+  "description": "Evidence-location and Markdown review assistance for checking a DOCX proposal against a CSV checklist.",
+  "version": "0.1.0",
+  "stage": "v0.1",
+  "productLine": "BidDeer-Agent-Skills",
+  "language": "python",
+  "entryDocumentation": "SKILL.md",
+  "humanDocumentation": "README.md",
+  "capabilities": [
+    "csv-checklist-parsing",
+    "docx-physical-order-parsing",
+    "candidate-evidence-retrieval",
+    "image-anchor-detection",
+    "adapter-based-evidence-reasoning",
+    "markdown-report-rendering"
+  ],
+  "unsupportedCapabilities": [
+    "pdf-input",
+    "ocr",
+    "image-content-recognition",
+    "rendered-page-number-mapping",
+    "real-llm-provider",
+    "final-compliance-adjudication",
+    "pass-fail-output",
+    "risk-level-output"
+  ],
+  "requiresExternalReasoningAdapter": true,
+  "license": "All rights reserved"
+}
