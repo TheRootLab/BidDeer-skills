@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://biddeer.local/schemas/proposal-point-checker/judgments.schema.json",
+  "title": "proposal-point-checker judgments.json",
+  "description": "External reasoning results consumed by the future report step. This schema mirrors ReasoningResult and links judgments to checklist item IDs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "judgments"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "proposal-point-checker.judgments.v0.1"
+    },
+    "judgments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/judgment"
+      }
+    }
+  },
+  "definitions": {
+    "judgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "itemId",
+        "status",
+        "reason",
+        "judgmentBasis",
+        "manualCheckPrompt"
+      ],
+      "properties": {
+        "itemId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "CLEAR_EVIDENCE",
+            "SUSPECTED_EVIDENCE",
+            "CONFLICTING_EVIDENCE",
+            "NOT_FOUND",
+            "INSUFFICIENT_EVIDENCE",
+            "UNABLE_TO_JUDGE"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "judgmentBasis": {
+          "type": "string"
+        },
+        "manualCheckPrompt": {
+          "type": "string"
+        },
+        "referencedEvidenceIndices": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}
