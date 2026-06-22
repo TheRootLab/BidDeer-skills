@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "proposal-point-checker.judgments.v0.1",
+  "judgments": [
+    {
+      "itemId": "ITEM-001",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "模拟判断：候选证据同时提到拟任项目经理及其高级工程师职称。",
+      "judgmentBasis": "仅基于合成样例中的团队配置文字，用于演示报告生成，不来自真实 LLM。",
+      "manualCheckPrompt": "请人工核对项目经理身份、职称材料及其与本项目要求的对应关系。"
+    },
+    {
+      "itemId": "ITEM-002",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "reason": "模拟判断：候选证据提到高新技术企业证书，但未提供有效期。",
+      "judgmentBasis": "仅基于合成样例中的资质清单文字，用于演示报告生成，不来自真实 LLM。",
+      "manualCheckPrompt": "请人工查验该证书的有效期及相关证明材料。"
+    },
+    {
+      "itemId": "ITEM-003",
+      "status": "CONFLICTING_EVIDENCE",
+      "reason": "模拟判断：候选证据中的联合体共同投标声明与“不接受联合体投标”的检查要求冲突。",
+      "judgmentBasis": "仅基于合成样例中的投标声明文字，用于演示报告生成，不来自真实 LLM。",
+      "manualCheckPrompt": "请人工确认投标主体关系、联合体协议及适用的采购要求。"
+    }
+  ]
+}

@@ -82,25 +82,33 @@ Deferred:
 
 ## Quick Start
 
-1. Generate a synthetic DOCX file for testing:
-   ```bash
-   python examples/generate_sample_docx.py sample_proposal.docx
-   ```
+The repository includes a fully synthetic proposal, checklist, and mock judgments, so the retrieve/report demo can run immediately after installation. None of these files contain real customers, projects, companies, certificates, or bidding materials.
 
-2. Run the `retrieve` stage to extract candidate evidence:
+1. Run the `retrieve` stage with the included synthetic proposal:
    ```bash
    python -m biddeer_checker.cli retrieve \
      --csv examples/sample_checklist.csv \
-     --docx sample_proposal.docx \
+     --docx examples/sample_proposal.docx \
      --out candidates.json
    ```
 
-3. **External Judgments Required:** `judgments.json` must be prepared externally. This package does not contain a built-in real LLM provider. You must construct or mock `judgments.json` based on the `candidates.json` structure for testing.
+2. Use `examples/sample_judgments.json` for the demo. It contains hand-authored mock evidence judgments for the synthetic inputs; it does not come from a real LLM and does not express a final bid rejection, pass/fail result, or risk level.
 
-4. Run the `report` stage to generate the Markdown report:
+3. Run the `report` stage to generate the Markdown report:
    ```bash
-   python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.md
+   python -m biddeer_checker.cli report \
+     --candidates candidates.json \
+     --judgments examples/sample_judgments.json \
+     --out report.md
    ```
+
+To regenerate the synthetic DOCX optionally, run:
+
+```bash
+python examples/generate_sample_docx.py examples/sample_proposal.docx
+```
+
+The committed DOCX is ready to use; regeneration is not required for the demo.
 
 ## Pipeline
 
@@ -233,8 +241,10 @@ The generated report uses the six evidence statuses listed above. It must not be
 This package includes:
 
 - `examples/sample_checklist.csv`: a small synthetic checklist.
+- `examples/sample_proposal.docx`: a ready-to-use, fully synthetic proposal covering the sample checklist scenarios.
+- `examples/sample_judgments.json`: hand-authored mock evidence judgments for the synthetic inputs; they do not come from a real LLM or provide final business decisions.
 - `examples/bridge_adapter_template.py`: a template for implementing an external reasoning adapter.
-- `examples/generate_sample_docx.py`: a helper that can generate a minimal synthetic DOCX for local experimentation when `python-docx` is available.
+- `examples/generate_sample_docx.py`: an optional helper that can regenerate the synthetic DOCX when `python-docx` is available.
 
 The examples are synthetic and do not use real bidding documents.
 
