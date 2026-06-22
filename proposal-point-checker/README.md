@@ -37,7 +37,7 @@ Deferred:
 
 2. Navigate to the package directory:
    ```bash
-   cd proposal-point-checker
+   cd BidDeer-skills/proposal-point-checker
    ```
 
 3. Create a virtual environment:
@@ -57,12 +57,12 @@ Deferred:
 
 5. Install the required dependencies:
    ```bash
-   pip install -r requirements.txt
+   python -m pip install -r requirements.txt
    ```
 
 6. Install development dependencies for smoke tests:
    ```bash
-   pip install -r requirements-dev.txt
+   python -m pip install -r requirements-dev.txt
    ```
 
 7. Verify the package import:
@@ -84,12 +84,15 @@ Deferred:
 
 1. Generate a synthetic DOCX file for testing:
    ```bash
-   python examples/generate_sample_docx.py
+   python examples/generate_sample_docx.py sample_proposal.docx
    ```
 
 2. Run the `retrieve` stage to extract candidate evidence:
    ```bash
-   python -m biddeer_checker.cli retrieve --csv examples/sample_checklist.csv --docx proposal.docx --out candidates.json
+   python -m biddeer_checker.cli retrieve \
+     --csv examples/sample_checklist.csv \
+     --docx sample_proposal.docx \
+     --out candidates.json
    ```
 
 3. **External Judgments Required:** `judgments.json` must be prepared externally. This package does not contain a built-in real LLM provider. You must construct or mock `judgments.json` based on the `candidates.json` structure for testing.
