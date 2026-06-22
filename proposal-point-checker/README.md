@@ -28,6 +28,77 @@ Deferred:
 - Electronic bidding system field checks.
 - Final compliance, bid rejection, pass/fail, or risk-level output.
 
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/TheRootLab/BidDeer-skills.git
+   ```
+
+2. Navigate to the package directory:
+   ```bash
+   cd proposal-point-checker
+   ```
+
+3. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   ```
+
+4. Activate the virtual environment:
+   - For macOS/Linux:
+     ```bash
+     source venv/bin/activate
+     ```
+   - For Windows PowerShell:
+     ```powershell
+     .\venv\Scripts\Activate.ps1
+     ```
+
+5. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+6. Install development dependencies for smoke tests:
+   ```bash
+   pip install -r requirements-dev.txt
+   ```
+
+7. Verify the package import:
+   ```bash
+   python -c "import biddeer_checker; print('biddeer_checker imported successfully')"
+   ```
+
+8. Verify the CLI help:
+   ```bash
+   python -m biddeer_checker.cli --help
+   ```
+
+9. Run the smoke tests:
+   ```bash
+   python -m pytest smoke_tests/test_cli_smoke.py -v
+   ```
+
+## Quick Start
+
+1. Generate a synthetic DOCX file for testing:
+   ```bash
+   python examples/generate_sample_docx.py
+   ```
+
+2. Run the `retrieve` stage to extract candidate evidence:
+   ```bash
+   python -m biddeer_checker.cli retrieve --csv examples/sample_checklist.csv --docx proposal.docx --out candidates.json
+   ```
+
+3. **External Judgments Required:** `judgments.json` must be prepared externally. This package does not contain a built-in real LLM provider. You must construct or mock `judgments.json` based on the `candidates.json` structure for testing.
+
+4. Run the `report` stage to generate the Markdown report:
+   ```bash
+   python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.md
+   ```
+
 ## Pipeline
 
 ```text
