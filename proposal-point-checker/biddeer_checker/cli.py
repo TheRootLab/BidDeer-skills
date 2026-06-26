@@ -16,6 +16,7 @@ from biddeer_checker.evidence_reasoning.models import (
 from biddeer_checker.evidence_retrieval.engine import retrieve_evidence
 from biddeer_checker.evidence_retrieval.models import CandidateEvidence, EvidencePackage
 from biddeer_checker.report_renderer.aggregator import ReportAggregator
+from biddeer_checker.report_renderer.csv_renderer import CSVRenderer
 from biddeer_checker.report_renderer.markdown_renderer import MarkdownRenderer
 
 
@@ -44,11 +45,16 @@ def _build_parser() -> argparse.ArgumentParser:
 
     report_parser = subparsers.add_parser(
         "report",
-        help="Render Markdown from candidate evidence and external judgments.",
+        help="Render a human-review report from candidate evidence and external judgments.",
     )
     report_parser.add_argument("--candidates", required=True)
     report_parser.add_argument("--judgments", required=True)
     report_parser.add_argument("--out", required=True)
+    report_parser.add_argument(
+        "--format",
+        choices=("markdown", "csv"),
+        default="markdown",
+    )
     report_parser.set_defaults(handler=_run_report)
 
     return parser
@@ -105,8 +111,13 @@ def _run_report(args: argparse.Namespace) -> int:
         )
 
     report = ReportAggregator.aggregate(judged_packages)
-    markdown = MarkdownRenderer.render(report)
-    Path(args.out).write_text(markdown, encoding="utf-8")
+    if args.format == "csv":
+        rendered = CSVRenderer.render(report)
+        with open(args.out, "w", encoding="utf-8-sig", newline="") as file:
+            file.write(rendered)
+    else:
+        markdown = MarkdownRenderer.render(report)
+        Path(args.out).write_text(markdown, encoding="utf-8")
     return 0
 
 

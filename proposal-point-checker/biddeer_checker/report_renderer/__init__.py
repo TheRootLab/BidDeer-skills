@@ -3,5 +3,11 @@ from biddeer_checker.report_renderer.models import (
     ManualReviewItem,
     ReportSummary,
 )
+from biddeer_checker.report_renderer.csv_renderer import CSVRenderer
 
-__all__ = ["ChecklistReviewReport", "ManualReviewItem", "ReportSummary"]
+__all__ = [
+    "CSVRenderer",
+    "ChecklistReviewReport",
+    "ManualReviewItem",
+    "ReportSummary",
+]

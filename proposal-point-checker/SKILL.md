@@ -1,6 +1,6 @@
 # proposal-point-checker
 
-Use this skill when you need to help a human reviewer check a DOCX proposal against a manually prepared CSV checklist, locate candidate evidence, and produce a Markdown review report for human verification.
+Use this skill when you need to help a human reviewer check a DOCX proposal against a manually prepared CSV checklist, locate candidate evidence, and produce Markdown or CSV review reports for human verification.
 
 This skill is an evidence-location and review-assistance workflow. It is not a legal or compliance adjudication system.
 
@@ -15,6 +15,7 @@ The current v0.1 pipeline supports:
 - Passing retrieved evidence packages into a caller-provided reasoning adapter.
 - Aggregating judged evidence packages.
 - Rendering a deterministic Markdown report for human review.
+- Rendering a deterministic CSV report for Excel / WPS manual review.
 
 The supported end-to-end shape is:
 
@@ -24,7 +25,7 @@ CSV checklist
 -> candidate evidence retrieval
 -> caller-provided evidence reasoning
 -> report aggregation
--> Markdown rendering
+-> Markdown or CSV rendering
 ```
 
 ## Hard Limits
@@ -76,6 +77,7 @@ from biddeer_checker.document_parser.parser import DocxDocumentParser
 from biddeer_checker.evidence_retrieval.engine import retrieve_evidence
 from biddeer_checker.evidence_reasoning.engine import ReasoningEngine
 from biddeer_checker.report_renderer.aggregator import ReportAggregator
+from biddeer_checker.report_renderer.csv_renderer import CSVRenderer
 from biddeer_checker.report_renderer.markdown_renderer import MarkdownRenderer
 
 items, errors = CSVChecklistParser().parse("checklist.csv")
@@ -90,6 +92,7 @@ judged = [engine.judge(package) for package in packages]
 
 report = ReportAggregator.aggregate(judged)
 markdown = MarkdownRenderer.render(report)
+csv_report = CSVRenderer.render(report)
 ```
 
 `YourLLMProviderAdapter` is supplied by the caller. The package does not provide an OpenAI, Gemini, Claude, or private gateway implementation.
@@ -105,6 +108,7 @@ The currently supported module entrypoints are:
 ```bash
 python -m biddeer_checker.cli retrieve --csv checklist.csv --docx proposal.docx --out candidates.json
 python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.md
+python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.csv --format csv
 ```
 
 Do not assume a console script such as `biddeer_checker` is installed unless a future packaging stage explicitly adds and validates that entrypoint.
@@ -115,10 +119,11 @@ For lightweight Agent runtimes, the supported workflow is:
 2. Judge each candidate package externally through the Agent runtime, a human process, or a mock workflow.
 3. Write `judgments.json` using the current judgments schema and exactly one of the six `EvidenceStatus` values for each checklist item.
 4. Run `python -m biddeer_checker.cli report` with `candidates.json` and `judgments.json` to write the Markdown report.
+5. Add `--format csv` when the reviewer needs a CSV report for Excel / WPS manual review.
 
 The `retrieve` command does not call a real LLM and does not support PDF, OCR, image content recognition, or rendered page mapping.
 
-The `report` command does not include a real LLM Provider. It consumes externally prepared judgments and renders a human-review Markdown report. It must not be used to output final bid rejection, pass/fail, compliance adjudication, or risk-level decisions.
+The `report` command does not include a real LLM Provider. It consumes externally prepared judgments and renders human-review Markdown or CSV reports. CSV is a review-assist format for filtering and checking evidence in Excel / WPS. It must not be used to output final bid rejection, pass/fail, compliance adjudication, or risk-level decisions.
 
 ## Mock And Demo Boundary
 
@@ -150,6 +155,15 @@ The Markdown report must:
 - Put non-`CLEAR_EVIDENCE` items into manual review.
 - Avoid pass/fail and risk-level wording.
 
+The CSV report must:
+
+- Use `python -m biddeer_checker.cli report --format csv`.
+- Preserve the original checklist order.
+- Include every checklist item.
+- Use fixed columns for reviewer-facing fields, not internal IDs.
+- Present the six evidence statuses as Chinese evidence-location states.
+- Avoid pass/fail, bid rejection, and risk-level wording.
+
 ## When To Stop
 
 Stop and ask for human direction if:
@@ -158,4 +172,4 @@ Stop and ask for human direction if:
 - The user asks for PDF, OCR, image content recognition, or page mapping.
 - The task requires judging certificate authenticity, seal authenticity, or final bid compliance.
 - The available evidence is only inside images.
-- You would need to modify `biddeer_checker/**`, add dependencies, add console script entrypoints, or change CLI/runtime behavior while only performing release documentation updates.
+- You would need to add dependencies, add console script entrypoints, or expand CLI/runtime behavior beyond Markdown/CSV report rendering.

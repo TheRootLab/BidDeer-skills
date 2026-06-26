@@ -1,6 +1,6 @@
 # proposal-point-checker
 
-`proposal-point-checker` is the first BidDeer Agent Skill package. It helps reviewers compare a manually prepared CSV checklist against a DOCX proposal, locate candidate evidence, and render a Markdown review report.
+`proposal-point-checker` is the first BidDeer Agent Skill package. It helps reviewers compare a manually prepared CSV checklist against a DOCX proposal, locate candidate evidence, and render Markdown or CSV review reports.
 
 The package is designed as a human-review assistant. It does not produce final bid rejection, compliance, pass/fail, or risk-level decisions.
 
@@ -15,6 +15,7 @@ Supported:
 - Deterministic candidate evidence retrieval from text, tables, and nearby image-anchor text.
 - Six-status evidence reasoning through a caller-provided adapter.
 - Markdown report aggregation and rendering.
+- CSV report rendering for Excel / WPS manual review.
 
 Deferred:
 
@@ -97,10 +98,21 @@ Deferred:
 
 3. **External Judgments Required:** `judgments.json` must be prepared externally. This package does not contain a built-in real LLM provider. You must construct or mock `judgments.json` based on the `candidates.json` structure for testing.
 
-4. Run the `report` stage to generate the Markdown report:
+4. Run the `report` stage to generate the Markdown report. Markdown remains the default output format:
    ```bash
    python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.md
    ```
+
+5. To generate a CSV report for Excel / WPS manual review, pass `--format csv` explicitly:
+   ```bash
+   python -m biddeer_checker.cli report \
+     --candidates candidates.json \
+     --judgments judgments.json \
+     --out report.csv \
+     --format csv
+   ```
+
+The repository may include `examples/sample_judgments.json` on branches or releases that publish ready-to-run demo samples. Treat that file as mock judgment data for report rendering only; it is not produced by a built-in real LLM provider.
 
 ## Pipeline
 
@@ -110,7 +122,7 @@ CSV checklist
 -> candidate evidence retrieval
 -> evidence reasoning through injected adapter
 -> report aggregation
--> Markdown rendering
+-> Markdown or CSV rendering
 ```
 
 The deterministic stages are implemented in the shared `biddeer_checker/` package in this repository. The reasoning stage requires the caller to provide an adapter implementing the current `LLMProviderAdapter` interface.
@@ -163,6 +175,7 @@ from biddeer_checker.document_parser.parser import DocxDocumentParser
 from biddeer_checker.evidence_retrieval.engine import retrieve_evidence
 from biddeer_checker.evidence_reasoning.engine import ReasoningEngine
 from biddeer_checker.report_renderer.aggregator import ReportAggregator
+from biddeer_checker.report_renderer.csv_renderer import CSVRenderer
 from biddeer_checker.report_renderer.markdown_renderer import MarkdownRenderer
 
 from your_project.adapters import YourLLMProviderAdapter
@@ -179,6 +192,7 @@ judged_packages = [engine.judge(package) for package in packages]
 
 report = ReportAggregator.aggregate(judged_packages)
 markdown = MarkdownRenderer.render(report)
+csv_report = CSVRenderer.render(report)
 ```
 
 The adapter must implement:
@@ -210,6 +224,7 @@ The implemented split-step CLI is available through the Python module entrypoint
 ```bash
 python -m biddeer_checker.cli retrieve --csv examples/sample_checklist.csv --docx proposal.docx --out candidates.json
 python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.md
+python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.csv --format csv
 ```
 
 No console script entrypoint is currently documented for this package. Use the module form above unless a future packaging stage adds and validates a separate entrypoint.
@@ -222,17 +237,20 @@ It performs deterministic parsing and candidate evidence retrieval only. It does
 
 ### `report`
 
-`report` reads `candidates.json` and `judgments.json`, then writes a Markdown report.
+`report` reads `candidates.json` and `judgments.json`, then writes a Markdown report by default.
 
 `judgments.json` must be prepared externally by an Agent runtime, a human review process, or a mock workflow. The package does not include a built-in real LLM provider and does not manage provider credentials.
 
-The generated report uses the six evidence statuses listed above. It must not be treated as a final bid rejection, pass/fail, compliance adjudication, or risk-level verdict.
+Use `--format csv` to write a CSV report with fixed Chinese columns for Excel / WPS manual review. The CLI does not infer the format from the output file suffix; Markdown remains the default unless `--format csv` is provided.
+
+The generated reports use the six evidence statuses listed above. They must not be treated as final bid rejection, pass/fail, compliance adjudication, or risk-level verdicts.
 
 ## Examples
 
 This package includes:
 
 - `examples/sample_checklist.csv`: a small synthetic checklist.
+- `examples/sample_judgments.json`: mock judgments for demo report rendering when included in the checked-out branch or release.
 - `examples/bridge_adapter_template.py`: a template for implementing an external reasoning adapter.
 - `examples/generate_sample_docx.py`: a helper that can generate a minimal synthetic DOCX for local experimentation when `python-docx` is available.
 
