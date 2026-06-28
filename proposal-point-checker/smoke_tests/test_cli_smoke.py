@@ -56,6 +56,30 @@ def test_standalone_cli_smoke(tmp_path: Path):
     
     assert candidates_path.exists(), "candidates.json was not generated"
     
+    # 2b. Run retrieve step with unified --proposal docx
+    candidates_proposal_docx_path = tmp_path / "candidates_proposal_docx.json"
+    retrieve_proposal_docx_cmd = [
+        sys.executable, "-m", "biddeer_checker.cli", "retrieve",
+        "--csv", str(csv_path),
+        "--proposal", str(docx_path),
+        "--out", str(candidates_proposal_docx_path)
+    ]
+    subprocess.run(retrieve_proposal_docx_cmd, cwd=str(pkg_root), check=True)
+    assert candidates_proposal_docx_path.exists(), "candidates_proposal_docx.json was not generated"
+
+    # 2c. Run retrieve step with unified --proposal pdf (which should fail with NotImplementedError)
+    pdf_path = tmp_path / "sample_proposal.pdf"
+    pdf_path.write_bytes(b"%PDF-1.7\n% synthetic\n")
+    retrieve_proposal_pdf_cmd = [
+        sys.executable, "-m", "biddeer_checker.cli", "retrieve",
+        "--csv", str(csv_path),
+        "--proposal", str(pdf_path),
+        "--out", str(tmp_path / "should_not_exist.json")
+    ]
+    res = subprocess.run(retrieve_proposal_pdf_cmd, cwd=str(pkg_root), capture_output=True, text=True)
+    assert res.returncode != 0
+    assert "NotImplementedError" in res.stderr or "PDF proposal input is recognized" in res.stderr
+
     # Verify candidates.json
     with open(candidates_path, "r", encoding="utf-8") as f:
         candidates_data = json.load(f)

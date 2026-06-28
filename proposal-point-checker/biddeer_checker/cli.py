@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from biddeer_checker.checklist_model.models import ChecklistItem
 from biddeer_checker.checklist_model.parser import CSVChecklistParser
 from biddeer_checker.document_parser.models import ImageObject, UserFacingLocator
-from biddeer_checker.document_parser.parser import DocxDocumentParser
+from biddeer_checker.document_parser.proposal_parser_dispatcher import ProposalParserDispatcher
 from biddeer_checker.evidence_reasoning.models import (
     EvidenceStatus,
     JudgedEvidencePackage,
@@ -36,10 +36,11 @@ def _build_parser() -> argparse.ArgumentParser:
 
     retrieve_parser = subparsers.add_parser(
         "retrieve",
-        help="Parse CSV/DOCX and write candidate evidence JSON.",
+        help="Parse a checklist and proposal file, then write candidate evidence JSON.",
     )
     retrieve_parser.add_argument("--csv", required=True)
-    retrieve_parser.add_argument("--docx", required=True)
+    retrieve_parser.add_argument("--docx", required=False)
+    retrieve_parser.add_argument("--proposal", required=False)
     retrieve_parser.add_argument("--out", required=True)
     retrieve_parser.set_defaults(handler=_run_retrieve)
 
@@ -61,11 +62,18 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _run_retrieve(args: argparse.Namespace) -> int:
+    if args.proposal and args.docx:
+        raise ValueError("Cannot use both --proposal and --docx. Please use --proposal as the unified input.")
+    if not args.proposal and not args.docx:
+        raise ValueError("Either --proposal or --docx must be provided.")
+
+    proposal_path = args.proposal or args.docx
+
     items, errors = CSVChecklistParser().parse(args.csv)
     if errors:
         raise ValueError(f"CSV checklist parse failed: {errors}")
 
-    document = DocxDocumentParser().parse(args.docx)
+    document = ProposalParserDispatcher().parse(proposal_path)
     packages = retrieve_evidence(items, document)
 
     payload = {
