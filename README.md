@@ -132,7 +132,7 @@ biddeer-skills/
 
 ## Roadmap
 
-* [ ] `proposal-point-checker`
+* [x] `proposal-point-checker`
 * [ ] `bid-invalid-clause-extractor`
 * [ ] `scoring-breakdown`
 * [ ] `document-duplication-check`

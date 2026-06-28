@@ -6,8 +6,8 @@
    ```bash
    git clone https://github.com/TheRootLab/BidDeer-skills.git
    ```
-2. Locate the skill you want to use in the `skills/` directory.
-3. Link or copy the skill directory to your Agent tool's skills folder.
+2. Use the canonical skill directory at `proposal-point-checker/`.
+3. Link or copy `proposal-point-checker/` to your Agent tool's skills directory.
 
 ## Integration
 
