@@ -167,4 +167,40 @@ def test_standalone_cli_smoke(tmp_path: Path):
 
     for forbidden_term in FORBIDDEN_CSV_TERMS:
         assert forbidden_term not in csv_text
-    
+
+    # 5b. Run explicit CSV report step for PDF and check locatorHint
+    with open(candidates_proposal_pdf_path, "r", encoding="utf-8") as f:
+        pdf_candidates_data = json.load(f)
+    pdf_judgments_path = tmp_path / "pdf_judgments.json"
+    mock_pdf_judgments = {
+        "schemaVersion": "proposal-point-checker.judgments.v0.1",
+        "judgments": [
+            {
+                "itemId": pkg["item"]["itemId"],
+                "status": "CLEAR_EVIDENCE",
+                "reason": "Mock valid reason",
+                "judgmentBasis": "Mock basis",
+                "manualCheckPrompt": "Mock check",
+                "referencedEvidenceIndices": [0] if pkg.get("candidates") else []
+            }
+            for pkg in pdf_candidates_data["packages"]
+        ]
+    }
+    with open(pdf_judgments_path, "w", encoding="utf-8") as f:
+        json.dump(mock_pdf_judgments, f)
+
+    pdf_csv_report_path = tmp_path / "pdf_report.csv"
+    pdf_csv_report_cmd = [
+        sys.executable, "-m", "biddeer_checker.cli", "report",
+        "--candidates", str(candidates_proposal_pdf_path),
+        "--judgments", str(pdf_judgments_path),
+        "--out", str(pdf_csv_report_path),
+        "--format", "csv",
+    ]
+    subprocess.run(pdf_csv_report_cmd, cwd=str(pkg_root), check=True)
+
+    assert pdf_csv_report_path.exists(), "pdf_report.csv was not generated"
+    pdf_csv_text = pdf_csv_report_path.read_text(encoding="utf-8-sig")
+    pdf_rows = list(csv.reader(io.StringIO(pdf_csv_text, newline="")))
+    assert pdf_rows[0] == CSV_HEADERS
+    assert any("text_layer_chinese.pdf > 第 1 页" in row[5] for row in pdf_rows[1:])
