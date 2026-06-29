@@ -1,6 +1,6 @@
 # proposal-point-checker
 
-`proposal-point-checker` is the first BidDeer Agent Skill package. It helps reviewers compare a manually prepared CSV checklist against a DOCX proposal, locate candidate evidence, and render Markdown or CSV review reports.
+`proposal-point-checker` is the first BidDeer Agent Skill package. It helps reviewers compare a manually prepared CSV checklist against a DOCX or text-layer PDF proposal, locate candidate evidence, and render Markdown or CSV review reports.
 
 The package is designed as a human-review assistant. It does not produce final bid rejection, compliance, pass/fail, or risk-level decisions.
 
@@ -9,20 +9,22 @@ The package is designed as a human-review assistant. It does not produce final b
 Supported:
 
 - CSV checklist parsing and validation.
-- Single DOCX proposal parsing.
+- Single DOCX or text-layer PDF proposal parsing.
+- Recommended unified CLI input using `--proposal` for both DOCX and text-layer PDF.
+- Local PDF text extraction using `pypdf==6.14.2`.
 - Paragraph, heading, and table-row extraction.
 - Lightweight image-anchor detection.
 - Deterministic candidate evidence retrieval from text, tables, and nearby image-anchor text.
 - Six-status evidence reasoning through a caller-provided adapter.
 - Markdown report aggregation and rendering.
-- CSV report rendering for Excel / WPS manual review.
+- CSV report rendering with PDF page-level provenance (e.g. `text_layer_chinese.pdf > 第 1 页`).
 
 Deferred:
 
-- PDF input.
+- Scanned or image-only PDF.
 - OCR.
 - Image content recognition.
-- Rendered page number mapping.
+- Rendered page number mapping for DOCX.
 - Real LLM provider implementation.
 - Multi-file proposal package support.
 - Seal or certificate authenticity judgment.
@@ -88,13 +90,23 @@ Deferred:
    python examples/generate_sample_docx.py sample_proposal.docx
    ```
 
-2. Run the `retrieve` stage to extract candidate evidence:
+2. Run the `retrieve` stage to extract candidate evidence (recommended using `--proposal`):
    ```bash
    python -m biddeer_checker.cli retrieve \
      --csv examples/sample_checklist.csv \
-     --docx sample_proposal.docx \
+     --proposal sample_proposal.docx \
      --out candidates.json
    ```
+
+   Or run using a text-layer PDF:
+   ```bash
+   python -m biddeer_checker.cli retrieve \
+     --csv examples/sample_checklist.csv \
+     --proposal tests/fixtures/pdf/text_layer_chinese.pdf \
+     --out candidates.json
+   ```
+
+   *Note: `--docx` is kept for backward compatibility. New workflows should use `--proposal`.*
 
 3. **External Judgments Required:** `judgments.json` must be prepared externally. This package does not contain a built-in real LLM provider. You must construct or mock `judgments.json` based on the `candidates.json` structure for testing.
 
@@ -118,7 +130,7 @@ The repository may include `examples/sample_judgments.json` on branches or relea
 
 ```text
 CSV checklist
--> DOCX document parsing
+-> DOCX or PDF document parsing
 -> candidate evidence retrieval
 -> evidence reasoning through injected adapter
 -> report aggregation
@@ -144,11 +156,15 @@ Example:
 ITEM-001,项目经理配置要求,须配备1名具备相关高级职称的项目经理。,无
 ```
 
-### Proposal DOCX
+### Proposal Input
 
-The proposal file must be a readable `.docx` file. WPS documents should be saved as standard Office Open XML `.docx` before processing.
+The proposal input (supplied via `--proposal`) accepts:
+- **DOCX**: The proposal file must be a readable `.docx` file. WPS documents should be saved as standard Office Open XML `.docx` before processing. The parser extracts text, tables, heading context, and image anchors. It does not read image content.
+- **PDF**: A valid vector/text-layer `.pdf` file. Scanned, encrypted, or image-only PDFs are rejected. It does not support OCR, PDF image extraction, or signature/seal authenticity verification.
 
-The parser extracts text, tables, heading context, and image anchors. It does not read image content.
+When the input is a text-layer PDF, the generated CSV report's `证据位置` (Evidence Location) column will include the PDF filename and the original 1-based page number, formatted as:
+`text_layer_chinese.pdf > 第 1 页`
+*Note: DOCX inputs do not provide rendered page numbers; page numbers will not be fabricated for DOCX.*
 
 ## Evidence Statuses
 
@@ -171,7 +187,7 @@ The current repository exposes the runtime through Python modules under `biddeer
 
 ```python
 from biddeer_checker.checklist_model.parser import CSVChecklistParser
-from biddeer_checker.document_parser.parser import DocxDocumentParser
+from biddeer_checker.document_parser.proposal_parser_dispatcher import ProposalParserDispatcher
 from biddeer_checker.evidence_retrieval.engine import retrieve_evidence
 from biddeer_checker.evidence_reasoning.engine import ReasoningEngine
 from biddeer_checker.report_renderer.aggregator import ReportAggregator
@@ -184,7 +200,7 @@ items, errors = CSVChecklistParser().parse("examples/sample_checklist.csv")
 if errors:
     raise ValueError(errors)
 
-document = DocxDocumentParser().parse("proposal.docx")
+document = ProposalParserDispatcher().parse("proposal.docx")  # or "proposal.pdf"
 packages = retrieve_evidence(items, document)
 
 engine = ReasoningEngine(adapter=YourLLMProviderAdapter())
@@ -222,7 +238,14 @@ This keeps the package lightweight and avoids hard-coding model vendors or crede
 The implemented split-step CLI is available through the Python module entrypoint:
 
 ```bash
+# Recommended unified proposal input:
+python -m biddeer_checker.cli retrieve --csv examples/sample_checklist.csv --proposal proposal.docx --out candidates.json
+python -m biddeer_checker.cli retrieve --csv examples/sample_checklist.csv --proposal proposal.pdf --out candidates.json
+
+# Legacy docx compatibility (kept for backward compatibility):
 python -m biddeer_checker.cli retrieve --csv examples/sample_checklist.csv --docx proposal.docx --out candidates.json
+
+# Generating reports:
 python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.md
 python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.csv --format csv
 ```
@@ -231,9 +254,13 @@ No console script entrypoint is currently documented for this package. Use the m
 
 ### `retrieve`
 
-`retrieve` reads a CSV checklist and a DOCX proposal, then writes `candidates.json`.
+`retrieve` reads a CSV checklist and a DOCX or text-layer PDF proposal, then writes `candidates.json`.
 
-It performs deterministic parsing and candidate evidence retrieval only. It does not call a real LLM, does not perform evidence reasoning, and does not add support for PDF, OCR, image content recognition, or rendered page mapping.
+It performs deterministic parsing and candidate evidence retrieval only. It does not call a real LLM and does not perform evidence reasoning.
+
+Supported formats:
+- **DOCX**: Parses text, tables, headings, and image anchors.
+- **PDF**: Parses text-layer PDFs locally using `pypdf==6.14.2` and extracts physical pages. Image-only (scanned), encrypted, or invalid PDFs are rejected with clear errors. OCR and image content extraction are not supported.
 
 ### `report`
 
@@ -264,5 +291,5 @@ Release package documentation updates must not:
 - Modify `tests/**`.
 - Add a real LLM provider.
 - Modify CLI implementation or add console script entrypoints.
-- Add PDF/OCR/image recognition/page mapping.
+- Add scanned PDF/OCR/image recognition/DOCX page mapping.
 - Change fixture semantics or validation assertions.

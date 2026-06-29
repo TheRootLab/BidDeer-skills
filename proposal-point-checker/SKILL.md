@@ -1,6 +1,6 @@
 # proposal-point-checker
 
-Use this skill when you need to help a human reviewer check a DOCX proposal against a manually prepared CSV checklist, locate candidate evidence, and produce Markdown or CSV review reports for human verification.
+Use this skill when you need to help a human reviewer check a DOCX or text-layer PDF proposal against a manually prepared CSV checklist, locate candidate evidence, and produce Markdown or CSV review reports for human verification.
 
 This skill is an evidence-location and review-assistance workflow. It is not a legal or compliance adjudication system.
 
@@ -9,19 +9,21 @@ This skill is an evidence-location and review-assistance workflow. It is not a l
 The current v0.1 pipeline supports:
 
 - Parsing a CSV checklist with the columns `序号`, `审核点名称`, `审核要求`, and `审核说明`.
-- Parsing a single DOCX proposal in physical document order.
+- Parsing a single DOCX proposal or text-layer PDF proposal in physical document order.
+- Recommending unified CLI input using `--proposal` for both DOCX and text-layer PDF.
+- Local PDF text extraction using `pypdf==6.14.2`.
 - Extracting paragraph text, table rows, heading context, and lightweight image anchors.
 - Retrieving candidate evidence from parsed text, table rows, and nearby image-anchor text.
 - Passing retrieved evidence packages into a caller-provided reasoning adapter.
 - Aggregating judged evidence packages.
 - Rendering a deterministic Markdown report for human review.
-- Rendering a deterministic CSV report for Excel / WPS manual review.
+- Rendering a deterministic CSV report for Excel / WPS manual review, featuring PDF page-level provenance (e.g. `text_layer_chinese.pdf > 第 1 页`).
 
 The supported end-to-end shape is:
 
 ```text
 CSV checklist
--> DOCX parsing
+-> DOCX or PDF parsing
 -> candidate evidence retrieval
 -> caller-provided evidence reasoning
 -> report aggregation
@@ -36,10 +38,10 @@ Agents must not claim this skill can independently perform semantic reasoning un
 
 Unsupported in v0.1:
 
-- PDF input.
+- Scanned or image-only PDF.
 - OCR.
 - Image content recognition.
-- DOCX rendered page number mapping.
+- DOCX rendered page number mapping (no fabrication of page numbers for DOCX).
 - Multi-file proposal packages.
 - Electronic bidding system field checks.
 - Seal authenticity judgment.
@@ -73,7 +75,7 @@ Minimal shape:
 
 ```python
 from biddeer_checker.checklist_model.parser import CSVChecklistParser
-from biddeer_checker.document_parser.parser import DocxDocumentParser
+from biddeer_checker.document_parser.proposal_parser_dispatcher import ProposalParserDispatcher
 from biddeer_checker.evidence_retrieval.engine import retrieve_evidence
 from biddeer_checker.evidence_reasoning.engine import ReasoningEngine
 from biddeer_checker.report_renderer.aggregator import ReportAggregator
@@ -84,7 +86,7 @@ items, errors = CSVChecklistParser().parse("checklist.csv")
 if errors:
     raise ValueError(errors)
 
-document = DocxDocumentParser().parse("proposal.docx")
+document = ProposalParserDispatcher().parse("proposal.docx")  # or "proposal.pdf"
 packages = retrieve_evidence(items, document)
 
 engine = ReasoningEngine(adapter=YourLLMProviderAdapter())
@@ -106,7 +108,14 @@ Use this when the Agent runtime can run shell commands and can prepare external 
 The currently supported module entrypoints are:
 
 ```bash
+# Recommended unified proposal input:
+python -m biddeer_checker.cli retrieve --csv checklist.csv --proposal proposal.docx --out candidates.json
+python -m biddeer_checker.cli retrieve --csv checklist.csv --proposal proposal.pdf --out candidates.json
+
+# Legacy compatibility (docx only):
 python -m biddeer_checker.cli retrieve --csv checklist.csv --docx proposal.docx --out candidates.json
+
+# Generating reports:
 python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.md
 python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.csv --format csv
 ```
@@ -115,13 +124,13 @@ Do not assume a console script such as `biddeer_checker` is installed unless a f
 
 For lightweight Agent runtimes, the supported workflow is:
 
-1. Run `python -m biddeer_checker.cli retrieve` with a CSV checklist and DOCX proposal to write `candidates.json`.
+1. Run `python -m biddeer_checker.cli retrieve` with a CSV checklist and a proposal (via `--proposal`) to write `candidates.json`.
 2. Judge each candidate package externally through the Agent runtime, a human process, or a mock workflow.
 3. Write `judgments.json` using the current judgments schema and exactly one of the six `EvidenceStatus` values for each checklist item.
 4. Run `python -m biddeer_checker.cli report` with `candidates.json` and `judgments.json` to write the Markdown report.
 5. Add `--format csv` when the reviewer needs a CSV report for Excel / WPS manual review.
 
-The `retrieve` command does not call a real LLM and does not support PDF, OCR, image content recognition, or rendered page mapping.
+The `retrieve` command does not call a real LLM. For DOCX, it parses headings, paragraph text, tables, and image anchors. For PDF, it parses text-layer PDF content locally using `pypdf==6.14.2` and retains page numbers; scanned, encrypted, or invalid PDFs are rejected with clear errors. It does not support OCR, image extraction, or rendered page mapping for DOCX.
 
 The `report` command does not include a real LLM Provider. It consumes externally prepared judgments and renders human-review Markdown or CSV reports. CSV is a review-assist format for filtering and checking evidence in Excel / WPS. It must not be used to output final bid rejection, pass/fail, compliance adjudication, or risk-level decisions.
 
@@ -140,10 +149,10 @@ ITEM-001,项目经理配置要求,须配备1名具备相关高级职称的项目
 
 Proposal document:
 
-- Must be DOCX.
-- Must be readable, unencrypted Office Open XML.
+- Must be DOCX or vector/text-layer PDF.
+- If DOCX, must be readable, unencrypted Office Open XML. WPS documents should be saved as standard `.docx` first.
+- If PDF, must be parsed locally with `pypdf==6.14.2`. Scanned, encrypted, or invalid PDFs are rejected with clear errors. OCR, image extraction, and seal authenticity checks are not supported.
 - Should contain extractable text for reliable retrieval.
-- WPS documents should be saved as standard `.docx` first.
 
 ## Output Rules
 
@@ -161,6 +170,8 @@ The CSV report must:
 - Preserve the original checklist order.
 - Include every checklist item.
 - Use fixed columns for reviewer-facing fields, not internal IDs.
+- Format PDF evidence locations as `<filename> > 第 N 页` using the physical page number.
+- Ensure DOCX page numbers are not fabricated.
 - Present the six evidence statuses as Chinese evidence-location states.
 - Avoid pass/fail, bid rejection, and risk-level wording.
 
@@ -169,7 +180,7 @@ The CSV report must:
 Stop and ask for human direction if:
 
 - You need a real LLM provider but none has been supplied.
-- The user asks for PDF, OCR, image content recognition, or page mapping.
+- The user asks for scanned PDF, OCR, image content recognition, or DOCX page mapping.
 - The task requires judging certificate authenticity, seal authenticity, or final bid compliance.
 - The available evidence is only inside images.
 - You would need to add dependencies, add console script entrypoints, or expand CLI/runtime behavior beyond Markdown/CSV report rendering.
