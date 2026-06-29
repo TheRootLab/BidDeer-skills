@@ -91,6 +91,10 @@ class CSVRenderer:
             return ""
 
         locator = candidate.userLocator
+        if locator.sourceDocName and locator.sourceDocName.lower().endswith(".pdf"):
+            if locator.locatorHint:
+                return locator.locatorHint
+
         headings = CSVRenderer._unique_non_empty(locator.headingPath)
         nearest_heading = CSVRenderer._normalize_text(locator.nearestHeading)
         if nearest_heading and (not headings or headings[-1] != nearest_heading):
