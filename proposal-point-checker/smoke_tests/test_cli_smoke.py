@@ -67,18 +67,40 @@ def test_standalone_cli_smoke(tmp_path: Path):
     subprocess.run(retrieve_proposal_docx_cmd, cwd=str(pkg_root), check=True)
     assert candidates_proposal_docx_path.exists(), "candidates_proposal_docx.json was not generated"
 
-    # 2c. Run retrieve step with unified --proposal pdf (which should fail with NotImplementedError)
-    pdf_path = tmp_path / "sample_proposal.pdf"
-    pdf_path.write_bytes(b"%PDF-1.7\n% synthetic\n")
+    # 2c. Run retrieve step with unified --proposal pdf (valid text-layer)
+    candidates_proposal_pdf_path = tmp_path / "candidates_proposal_pdf.json"
     retrieve_proposal_pdf_cmd = [
         sys.executable, "-m", "biddeer_checker.cli", "retrieve",
         "--csv", str(csv_path),
-        "--proposal", str(pdf_path),
+        "--proposal", str(pkg_root / "tests" / "fixtures" / "pdf" / "text_layer_chinese.pdf"),
+        "--out", str(candidates_proposal_pdf_path)
+    ]
+    subprocess.run(retrieve_proposal_pdf_cmd, cwd=str(pkg_root), check=True)
+    assert candidates_proposal_pdf_path.exists(), "candidates_proposal_pdf.json was not generated"
+
+    # 2d. Run retrieve step with encrypted PDF
+    encrypted_pdf_path = pkg_root / "tests" / "fixtures" / "pdf" / "encrypted.pdf"
+    retrieve_encrypted_cmd = [
+        sys.executable, "-m", "biddeer_checker.cli", "retrieve",
+        "--csv", str(csv_path),
+        "--proposal", str(encrypted_pdf_path),
         "--out", str(tmp_path / "should_not_exist.json")
     ]
-    res = subprocess.run(retrieve_proposal_pdf_cmd, cwd=str(pkg_root), capture_output=True, text=True)
-    assert res.returncode != 0
-    assert "NotImplementedError" in res.stderr or "PDF proposal input is recognized" in res.stderr
+    res_enc = subprocess.run(retrieve_encrypted_cmd, cwd=str(pkg_root), capture_output=True, text=True)
+    assert res_enc.returncode != 0
+    assert "PermissionError" in res_enc.stderr or "encrypted or password-protected" in res_enc.stderr
+
+    # 2e. Run retrieve step with image-only PDF
+    image_only_pdf_path = pkg_root / "tests" / "fixtures" / "pdf" / "image_only.pdf"
+    retrieve_image_only_cmd = [
+        sys.executable, "-m", "biddeer_checker.cli", "retrieve",
+        "--csv", str(csv_path),
+        "--proposal", str(image_only_pdf_path),
+        "--out", str(tmp_path / "should_not_exist2.json")
+    ]
+    res_img = subprocess.run(retrieve_image_only_cmd, cwd=str(pkg_root), capture_output=True, text=True)
+    assert res_img.returncode != 0
+    assert "ValueError" in res_img.stderr or "Scanned PDFs without a text layer" in res_img.stderr
 
     # Verify candidates.json
     with open(candidates_path, "r", encoding="utf-8") as f:

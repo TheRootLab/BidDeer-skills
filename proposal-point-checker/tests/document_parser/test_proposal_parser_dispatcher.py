@@ -22,8 +22,22 @@ def test_dispatcher_pdf(tmp_path):
     pdf_path = tmp_path / "test.pdf"
     pdf_path.write_bytes(b"%PDF-1.7\n% synthetic\n")
 
-    with pytest.raises(NotImplementedError, match="PDF proposal input is recognized, but the PDF parser is not implemented yet. This PR only adds file type detection and parser dispatch."):
-        dispatcher.parse(str(pdf_path))
+    with patch("biddeer_checker.document_parser.pdf_parser.PdfDocumentParser.parse") as mock_parse:
+        mock_parse.return_value = "mock_document"
+        result = dispatcher.parse(str(pdf_path))
+        assert result == "mock_document"
+        mock_parse.assert_called_once_with(str(pdf_path))
+
+
+def test_dispatcher_pdf_error_propagation(tmp_path):
+    dispatcher = ProposalParserDispatcher()
+    pdf_path = tmp_path / "test.pdf"
+    pdf_path.write_bytes(b"%PDF-1.7\n% synthetic\n")
+
+    with patch("biddeer_checker.document_parser.pdf_parser.PdfDocumentParser.parse") as mock_parse:
+        mock_parse.side_effect = PermissionError("encrypted")
+        with pytest.raises(PermissionError, match="encrypted"):
+            dispatcher.parse(str(pdf_path))
 
 
 def test_dispatcher_invalid_docx(tmp_path):
