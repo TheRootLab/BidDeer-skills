@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "proposal-point-checker.judgments.v0.1",
+  "judgments": [
+    {
+      "itemId": "ITEM-001",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选文字明确记载项目经理及高级工程师职称。",
+      "judgmentBasis": "引用第 1 页候选证据。",
+      "manualCheckPrompt": "请人工核对职称材料的完整性及适用范围。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-002",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选文字明确记载近 6 个月连续社保证明。",
+      "judgmentBasis": "引用第 1 页候选证据。",
+      "manualCheckPrompt": "请人工核对月份连续性及人员对应关系。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-003",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选文字明确记载 P1 级故障 30 分钟内响应。",
+      "judgmentBasis": "引用第 2 页候选证据。",
+      "manualCheckPrompt": "请人工核对故障定义和响应计时口径。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-004",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选文字明确记载不少于 3 年免费软件升级服务。",
+      "judgmentBasis": "引用第 2 页候选证据。",
+      "manualCheckPrompt": "请人工核对免费服务范围及起算时间。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-005",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选表格文字包含信息安全管理体系认证证书及有效期。",
+      "judgmentBasis": "引用第 3 页候选证据。",
+      "manualCheckPrompt": "请人工核对合成证书字段的对应关系。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-006",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选表格文字包含质量管理体系认证证书及有效期。",
+      "judgmentBasis": "引用第 3 页候选证据。",
+      "manualCheckPrompt": "请人工核对合成证书字段的对应关系。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-007",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选文字明确记载 90 个自然日内完成终验资料提交。",
+      "judgmentBasis": "引用第 4 页候选证据。",
+      "manualCheckPrompt": "请人工核对各里程碑之间的时间关系。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-008",
+      "status": "NOT_FOUND",
+      "reason": "未检索到与长期现场服务人员名单对应的候选文字。",
+      "judgmentBasis": "候选证据列表为空。",
+      "manualCheckPrompt": "请人工复核全文及附件目录。",
+      "referencedEvidenceIndices": []
+    }
+  ]
+}
