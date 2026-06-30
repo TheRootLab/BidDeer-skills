@@ -83,6 +83,16 @@ Deferred:
    python -m pytest smoke_tests/test_cli_smoke.py -v
    ```
 
+## Runtime Environment
+
+For customer deployment, Agent integration, working-directory rules, virtualenv expectations, path handling, and post-install validation, see [`docs/runtime-environment.md`](docs/runtime-environment.md).
+
+Key rule:
+
+```text
+Use Skill root as cwd. Use absolute task-workspace paths for user inputs and outputs. Treat the Skill directory as read-mostly after installation.
+```
+
 ## Quick Start
 
 1. Generate a synthetic DOCX file for testing:
