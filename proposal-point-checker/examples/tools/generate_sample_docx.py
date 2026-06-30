@@ -14,7 +14,11 @@ def generate(out_path: Path | None = None) -> Path:
     if out_path:
         output_path = out_path
     else:
-        output_path = Path(__file__).with_name("sample_proposal.docx")
+        output_path = (
+            Path(__file__).parent.parent
+            / "quickstart"
+            / "sample_proposal.docx"
+        )
 
     document = Document()
     document.add_heading("团队配置", level=1)

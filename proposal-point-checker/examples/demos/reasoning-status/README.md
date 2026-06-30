@@ -30,15 +30,15 @@
 
 输入文件：
 
-- `reasoning_checklist.csv`：覆盖 6 种状态的 10 条合成检查点。
-- `reasoning_proposal.docx`：五页合成投标文件源文档。
-- `reasoning_proposal_text_layer.pdf`：由 DOCX 导出的五页 text-layer PDF。
-- `sample_judgments.json`：供 report 命令使用的 mock judgments。
+- `inputs/reasoning_checklist.csv`：覆盖 6 种状态的 10 条合成检查点。
+- `inputs/reasoning_proposal.docx`：五页合成投标文件源文档。
+- `inputs/reasoning_proposal_text_layer.pdf`：由 DOCX 导出的五页 text-layer PDF。
+- `inputs/sample_judgments.json`：供 report 命令使用的 mock judgments。
 
 预期输出：
 
-- `expected_candidates_reasoning.json`：retrieve 命令生成的候选证据。
-- `expected_report_reasoning.md`：report 命令生成的 Markdown。
-- `expected_report_reasoning.csv`：report 命令生成的固定 7 列 CSV。
+- `expected/expected_candidates_reasoning.json`：retrieve 命令生成的候选证据。
+- `expected/expected_report_reasoning.md`：report 命令生成的 Markdown。
+- `expected/expected_report_reasoning.csv`：report 命令生成的固定 7 列 CSV。
 
-完整运行步骤见 [`reasoning_runbook.md`](reasoning_runbook.md)。
+完整运行步骤见 [`runbook.md`](runbook.md)。

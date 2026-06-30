@@ -8,16 +8,16 @@
 
 输入文件：
 
-- `synthetic_checklist.csv`：8 条合成检查点，使用现有 CSV schema。
-- `synthetic_proposal.docx`：四页合成投标文件源文档。
-- `synthetic_proposal_text_layer.pdf`：由 DOCX 导出的四页 text-layer PDF。
-- `sample_judgments.json`：供 report 命令使用的 mock judgments。
+- `inputs/synthetic_checklist.csv`：8 条合成检查点，使用现有 CSV schema。
+- `inputs/synthetic_proposal.docx`：四页合成投标文件源文档。
+- `inputs/synthetic_proposal_text_layer.pdf`：由 DOCX 导出的四页 text-layer PDF。
+- `inputs/sample_judgments.json`：供 report 命令使用的 mock judgments。
 
 预期输出：
 
-- `expected_candidates_pdf.json`：retrieve 命令生成的候选证据。
-- `expected_report_pdf.md`：report 命令生成的 Markdown。
-- `expected_report_pdf.csv`：report 命令生成的 7 列 CSV。
+- `expected/expected_candidates_pdf.json`：retrieve 命令生成的候选证据。
+- `expected/expected_report_pdf.md`：report 命令生成的 Markdown。
+- `expected/expected_report_pdf.csv`：report 命令生成的 7 列 CSV。
 
 ## 能力边界
 
@@ -25,4 +25,4 @@
 
 输出只整理候选证据和人工复核材料，不输出通过/不通过、废标/不废标或风险等级。所有输出均需人工复核，不应直接作为采购、评审或合同决策依据。
 
-完整运行步骤和预期检查见 [`demo_runbook.md`](demo_runbook.md)。
+完整运行步骤和预期检查见 [`runbook.md`](runbook.md)。

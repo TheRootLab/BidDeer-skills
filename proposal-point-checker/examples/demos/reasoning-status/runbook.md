@@ -1,26 +1,26 @@
 # Reasoning-Status Demo Runbook
 
-本 runbook 使用合成 CSV、text-layer PDF 和 mock judgments，生成 reasoning-status 候选证据及两种报告。所有命令均从仓库内的 `proposal-point-checker` 目录运行。
+本 runbook 使用合成 CSV、text-layer PDF 和 mock judgments，生成 reasoning-status 候选证据及两种报告。所有命令均从 Skill root 运行，输出写入外部 task workspace。
 
 ## 运行 demo
 
 ```bash
-cd proposal-point-checker
+cd "<skill_root>"
 
 python -m biddeer_checker.cli retrieve \
-  --csv examples/demo_reasoning/reasoning_checklist.csv \
-  --proposal examples/demo_reasoning/reasoning_proposal_text_layer.pdf \
-  --out /tmp/biddeer-reasoning-candidates.json
+  --csv "examples/demos/reasoning-status/inputs/reasoning_checklist.csv" \
+  --proposal "examples/demos/reasoning-status/inputs/reasoning_proposal_text_layer.pdf" \
+  --out "<absolute_task_workspace>/reasoning_candidates.json"
 
 python -m biddeer_checker.cli report \
-  --candidates /tmp/biddeer-reasoning-candidates.json \
-  --judgments examples/demo_reasoning/sample_judgments.json \
-  --out /tmp/biddeer-reasoning-report.md
+  --candidates "<absolute_task_workspace>/reasoning_candidates.json" \
+  --judgments "examples/demos/reasoning-status/inputs/sample_judgments.json" \
+  --out "<absolute_task_workspace>/reasoning_report.md"
 
 python -m biddeer_checker.cli report \
-  --candidates /tmp/biddeer-reasoning-candidates.json \
-  --judgments examples/demo_reasoning/sample_judgments.json \
-  --out /tmp/biddeer-reasoning-report.csv \
+  --candidates "<absolute_task_workspace>/reasoning_candidates.json" \
+  --judgments "examples/demos/reasoning-status/inputs/sample_judgments.json" \
+  --out "<absolute_task_workspace>/reasoning_report.csv" \
   --format csv
 ```
 
@@ -32,11 +32,11 @@ python -m biddeer_checker.cli report \
 
 ```bash
 libreoffice --headless --convert-to pdf \
-  --outdir examples/demo_reasoning \
-  examples/demo_reasoning/reasoning_proposal.docx
+  --outdir "examples/demos/reasoning-status/inputs" \
+  "examples/demos/reasoning-status/inputs/reasoning_proposal.docx"
 
-mv examples/demo_reasoning/reasoning_proposal.pdf \
-  examples/demo_reasoning/reasoning_proposal_text_layer.pdf
+mv "examples/demos/reasoning-status/inputs/reasoning_proposal.pdf" \
+  "examples/demos/reasoning-status/inputs/reasoning_proposal_text_layer.pdf"
 ```
 
 ## 验证 PDF 文本层
@@ -46,7 +46,7 @@ python - <<'PY'
 from pathlib import Path
 from pypdf import PdfReader
 
-pdf = Path("examples/demo_reasoning/reasoning_proposal_text_layer.pdf")
+pdf = Path("examples/demos/reasoning-status/inputs/reasoning_proposal_text_layer.pdf")
 reader = PdfReader(str(pdf))
 print("pages:", len(reader.pages))
 assert len(reader.pages) >= 5
@@ -72,3 +72,5 @@ PY
 9. 最终仍需人工复核。
 
 本 demo 不包含真实 LLM Provider，也不覆盖 OCR、扫描件 PDF 或 PDF 图片提取。
+
+仓库提交的回归参考输出位于 `examples/demos/reasoning-status/expected/`。
