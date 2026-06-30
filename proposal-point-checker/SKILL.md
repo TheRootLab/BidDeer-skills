@@ -109,7 +109,7 @@ csv_report = CSVRenderer.render(report)
 
 `YourLLMProviderAdapter` is supplied by the caller. The package does not provide an OpenAI, Gemini, Claude, or private gateway implementation.
 
-See `examples/bridge_adapter_template.py` for the expected adapter shape.
+See `examples/tools/bridge_adapter_template.py` for the expected adapter shape.
 
 ### Mode B: Split-Step CLI Workflow
 
@@ -147,6 +147,12 @@ The `report` command does not include a real LLM Provider. It consumes externall
 ## Mock And Demo Boundary
 
 Mock providers used by tests are acceptance-test fixtures only. They prove the pipeline wiring and six-status report behavior; they are not real LLM reasoning and must not be presented as model capability.
+
+Public examples are organized under [`examples/README.md`](examples/README.md):
+
+- `quickstart/` for minimal usage.
+- `demos/pdf-basic/` for the basic text-layer PDF demo.
+- `demos/reasoning-status/` for the six-status reasoning demo.
 
 ## Input Rules
 

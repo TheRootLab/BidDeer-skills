@@ -210,18 +210,18 @@ Use the fully synthetic basic PDF demo to validate an installation without custo
 cd "<skill_root>"
 
 python -m biddeer_checker.cli retrieve \
-  --csv "examples/demo_pdf/synthetic_checklist.csv" \
-  --proposal "examples/demo_pdf/synthetic_proposal_text_layer.pdf" \
+  --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" \
+  --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" \
   --out "<absolute_task_workspace>/demo_candidates.json"
 
 python -m biddeer_checker.cli report \
   --candidates "<absolute_task_workspace>/demo_candidates.json" \
-  --judgments "examples/demo_pdf/sample_judgments.json" \
+  --judgments "examples/demos/pdf-basic/inputs/sample_judgments.json" \
   --out "<absolute_task_workspace>/demo_report.md"
 
 python -m biddeer_checker.cli report \
   --candidates "<absolute_task_workspace>/demo_candidates.json" \
-  --judgments "examples/demo_pdf/sample_judgments.json" \
+  --judgments "examples/demos/pdf-basic/inputs/sample_judgments.json" \
   --out "<absolute_task_workspace>/demo_report.csv" \
   --format csv
 ```
@@ -234,7 +234,7 @@ The installation smoke validation succeeds when:
 4. PDF evidence locations include the filename and physical page number.
 5. All output files are written outside the Skill directory.
 
-Use `examples/demo_reasoning/` when separately validating six-status report behavior.
+Use `examples/demos/reasoning-status/` when separately validating six-status report behavior.
 
 ## LLM Provider Boundary
 

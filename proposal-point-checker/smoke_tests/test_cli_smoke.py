@@ -36,14 +36,18 @@ def test_standalone_cli_smoke(tmp_path: Path):
     pkg_root = Path(__file__).parent.parent
     
     # 1. Generate synthetic DOCX
-    docx_script = pkg_root / "examples" / "generate_sample_docx.py"
+    docx_script = (
+        pkg_root / "examples" / "tools" / "generate_sample_docx.py"
+    )
     docx_path = tmp_path / "sample_proposal.docx"
     subprocess.run([sys.executable, str(docx_script), str(docx_path)], cwd=str(tmp_path), check=True)
     
     assert docx_path.exists(), "DOCX was not generated"
 
     # 2. Run retrieve step
-    csv_path = pkg_root / "examples" / "sample_checklist.csv"
+    csv_path = (
+        pkg_root / "examples" / "quickstart" / "sample_checklist.csv"
+    )
     candidates_path = tmp_path / "candidates.json"
     
     retrieve_cmd = [

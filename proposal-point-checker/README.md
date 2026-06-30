@@ -97,23 +97,23 @@ Use Skill root as cwd. Use absolute task-workspace paths for user inputs and out
 
 1. Generate a synthetic DOCX file for testing:
    ```bash
-   python examples/generate_sample_docx.py sample_proposal.docx
+   python examples/tools/generate_sample_docx.py examples/quickstart/sample_proposal.docx
    ```
 
 2. Run the `retrieve` stage to extract candidate evidence (recommended using `--proposal`):
    ```bash
    python -m biddeer_checker.cli retrieve \
-     --csv examples/sample_checklist.csv \
-     --proposal sample_proposal.docx \
-     --out candidates.json
+     --csv "examples/quickstart/sample_checklist.csv" \
+     --proposal "examples/quickstart/sample_proposal.docx" \
+     --out "<absolute_task_workspace>/candidates.json"
    ```
 
    Or run using a text-layer PDF:
    ```bash
    python -m biddeer_checker.cli retrieve \
-     --csv examples/sample_checklist.csv \
-     --proposal tests/fixtures/pdf/text_layer_chinese.pdf \
-     --out candidates.json
+     --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" \
+     --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" \
+     --out "<absolute_task_workspace>/candidates.json"
    ```
 
    *Note: `--docx` is kept for backward compatibility. New workflows should use `--proposal`.*
@@ -122,19 +122,22 @@ Use Skill root as cwd. Use absolute task-workspace paths for user inputs and out
 
 4. Run the `report` stage to generate the Markdown report. Markdown remains the default output format:
    ```bash
-   python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.md
+   python -m biddeer_checker.cli report \
+     --candidates "<absolute_task_workspace>/candidates.json" \
+     --judgments "<absolute_task_workspace>/judgments.json" \
+     --out "<absolute_task_workspace>/report.md"
    ```
 
 5. To generate a CSV report for Excel / WPS manual review, pass `--format csv` explicitly:
    ```bash
    python -m biddeer_checker.cli report \
-     --candidates candidates.json \
-     --judgments judgments.json \
-     --out report.csv \
+     --candidates "<absolute_task_workspace>/candidates.json" \
+     --judgments "<absolute_task_workspace>/judgments.json" \
+     --out "<absolute_task_workspace>/report.csv" \
      --format csv
    ```
 
-The repository may include `examples/sample_judgments.json` on branches or releases that publish ready-to-run demo samples. Treat that file as mock judgment data for report rendering only; it is not produced by a built-in real LLM provider.
+Runtime outputs belong in an external task workspace, not in the Skill directory. For ready-to-run mock judgments and expected outputs, use the full synthetic demos under `examples/demos/`.
 
 ## Pipeline
 
@@ -206,7 +209,9 @@ from biddeer_checker.report_renderer.markdown_renderer import MarkdownRenderer
 
 from your_project.adapters import YourLLMProviderAdapter
 
-items, errors = CSVChecklistParser().parse("examples/sample_checklist.csv")
+items, errors = CSVChecklistParser().parse(
+    "examples/quickstart/sample_checklist.csv"
+)
 if errors:
     raise ValueError(errors)
 
@@ -227,7 +232,7 @@ The adapter must implement:
 invoke_reasoning(item: ChecklistItem, context_text: str) -> ReasoningResult
 ```
 
-See `examples/bridge_adapter_template.py` for a non-functional template. It intentionally does not call any real provider.
+See `examples/tools/bridge_adapter_template.py` for a non-functional template. It intentionally does not call any real provider.
 
 ## No Built-In Real LLM Provider
 
@@ -249,15 +254,15 @@ The implemented split-step CLI is available through the Python module entrypoint
 
 ```bash
 # Recommended unified proposal input:
-python -m biddeer_checker.cli retrieve --csv examples/sample_checklist.csv --proposal proposal.docx --out candidates.json
-python -m biddeer_checker.cli retrieve --csv examples/sample_checklist.csv --proposal proposal.pdf --out candidates.json
+python -m biddeer_checker.cli retrieve --csv "examples/quickstart/sample_checklist.csv" --proposal "examples/quickstart/sample_proposal.docx" --out "<absolute_task_workspace>/candidates.json"
+python -m biddeer_checker.cli retrieve --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" --out "<absolute_task_workspace>/candidates.json"
 
 # Legacy docx compatibility (kept for backward compatibility):
-python -m biddeer_checker.cli retrieve --csv examples/sample_checklist.csv --docx proposal.docx --out candidates.json
+python -m biddeer_checker.cli retrieve --csv "examples/quickstart/sample_checklist.csv" --docx "examples/quickstart/sample_proposal.docx" --out "<absolute_task_workspace>/candidates.json"
 
 # Generating reports:
-python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.md
-python -m biddeer_checker.cli report --candidates candidates.json --judgments judgments.json --out report.csv --format csv
+python -m biddeer_checker.cli report --candidates "<absolute_task_workspace>/candidates.json" --judgments "<absolute_task_workspace>/judgments.json" --out "<absolute_task_workspace>/report.md"
+python -m biddeer_checker.cli report --candidates "<absolute_task_workspace>/candidates.json" --judgments "<absolute_task_workspace>/judgments.json" --out "<absolute_task_workspace>/report.csv" --format csv
 ```
 
 No console script entrypoint is currently documented for this package. Use the module form above unless a future packaging stage adds and validates a separate entrypoint.
@@ -284,12 +289,12 @@ The generated reports use the six evidence statuses listed above. They must not 
 
 ## Examples
 
-This package includes:
+The examples taxonomy is documented in [`examples/README.md`](examples/README.md):
 
-- `examples/sample_checklist.csv`: a small synthetic checklist.
-- `examples/sample_judgments.json`: mock judgments for demo report rendering when included in the checked-out branch or release.
-- `examples/bridge_adapter_template.py`: a template for implementing an external reasoning adapter.
-- `examples/generate_sample_docx.py`: a helper that can generate a minimal synthetic DOCX for local experimentation when `python-docx` is available.
+- `examples/quickstart/`: minimal first-use files.
+- `examples/demos/pdf-basic/`: complete synthetic text-layer PDF workflow.
+- `examples/demos/reasoning-status/`: complete six-status reasoning-boundary workflow.
+- `examples/tools/`: DOCX generation helper and external adapter template.
 
 The examples are synthetic and do not use real bidding documents.
 

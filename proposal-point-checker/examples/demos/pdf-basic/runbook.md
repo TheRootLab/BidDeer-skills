@@ -1,26 +1,26 @@
 # Synthetic PDF Demo Runbook
 
-本 runbook 从仓库内的合成 CSV、text-layer PDF 和 mock judgments 生成候选证据及两种报告。所有命令均在仓库根目录下的 `proposal-point-checker` 中运行。
+本 runbook 从仓库内的合成 CSV、text-layer PDF 和 mock judgments 生成候选证据及两种报告。所有命令均从 Skill root 运行，输出写入外部 task workspace。
 
 ## 运行 demo
 
 ```bash
-cd proposal-point-checker
+cd "<skill_root>"
 
 python -m biddeer_checker.cli retrieve \
-  --csv examples/demo_pdf/synthetic_checklist.csv \
-  --proposal examples/demo_pdf/synthetic_proposal_text_layer.pdf \
-  --out /tmp/biddeer-demo-candidates.json
+  --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" \
+  --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" \
+  --out "<absolute_task_workspace>/demo_candidates.json"
 
 python -m biddeer_checker.cli report \
-  --candidates /tmp/biddeer-demo-candidates.json \
-  --judgments examples/demo_pdf/sample_judgments.json \
-  --out /tmp/biddeer-demo-report.md
+  --candidates "<absolute_task_workspace>/demo_candidates.json" \
+  --judgments "examples/demos/pdf-basic/inputs/sample_judgments.json" \
+  --out "<absolute_task_workspace>/demo_report.md"
 
 python -m biddeer_checker.cli report \
-  --candidates /tmp/biddeer-demo-candidates.json \
-  --judgments examples/demo_pdf/sample_judgments.json \
-  --out /tmp/biddeer-demo-report.csv \
+  --candidates "<absolute_task_workspace>/demo_candidates.json" \
+  --judgments "examples/demos/pdf-basic/inputs/sample_judgments.json" \
+  --out "<absolute_task_workspace>/demo_report.csv" \
   --format csv
 ```
 
@@ -32,11 +32,11 @@ python -m biddeer_checker.cli report \
 
 ```bash
 libreoffice --headless --convert-to pdf \
-  --outdir examples/demo_pdf \
-  examples/demo_pdf/synthetic_proposal.docx
+  --outdir "examples/demos/pdf-basic/inputs" \
+  "examples/demos/pdf-basic/inputs/synthetic_proposal.docx"
 
-mv examples/demo_pdf/synthetic_proposal.pdf \
-  examples/demo_pdf/synthetic_proposal_text_layer.pdf
+mv "examples/demos/pdf-basic/inputs/synthetic_proposal.pdf" \
+  "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf"
 ```
 
 重新导出后必须执行下方的文本层验证；没有可提取文本的 PDF 不适用于本 demo。
@@ -48,7 +48,7 @@ python - <<'PY'
 from pathlib import Path
 from pypdf import PdfReader
 
-pdf = Path("examples/demo_pdf/synthetic_proposal_text_layer.pdf")
+pdf = Path("examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf")
 reader = PdfReader(str(pdf))
 print("pages:", len(reader.pages))
 assert len(reader.pages) >= 4
@@ -72,3 +72,5 @@ PY
 7. 所有候选证据、状态和报告内容最终仍需人工复核。
 
 本 demo 仅覆盖 text-layer PDF；不覆盖 OCR、扫描件 PDF 或 PDF 图片提取。
+
+仓库提交的回归参考输出位于 `examples/demos/pdf-basic/expected/`。
