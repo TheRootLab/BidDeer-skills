@@ -63,6 +63,16 @@ Reasoning output must use exactly one of these six evidence statuses:
 
 Do not convert these statuses into pass/fail, compliant/non-compliant, risk level, or bid rejection conclusions. The report is for human review.
 
+## Runtime Environment Contract
+
+Before executing this skill in an Agent runtime or customer deployment, follow [`docs/runtime-environment.md`](docs/runtime-environment.md).
+
+Key rule:
+
+```text
+Use Skill root as cwd. Use absolute task-workspace paths for all user inputs and outputs. Treat the Skill directory as read-mostly after installation.
+```
+
 ## Execution Modes
 
 ### Mode A: Python SDK Injection
