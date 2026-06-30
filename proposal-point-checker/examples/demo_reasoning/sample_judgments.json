@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "proposal-point-checker.judgments.v0.1",
+  "judgments": [
+    {
+      "itemId": "ITEM-R001",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选文字明确记载项目经理及高级工程师职称，仍需人工复核证明材料。",
+      "judgmentBasis": "引用第 1 页明确候选文字，并保留人工复核要求。",
+      "manualCheckPrompt": "请人工核对职称材料的完整性及人员对应关系。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-R002",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选文字明确记载近 6 个月连续社保证明，仍需人工复核月份连续性。",
+      "judgmentBasis": "引用第 1 页明确候选文字，并保留人工复核要求。",
+      "manualCheckPrompt": "请人工核对社保月份、人员姓名和材料完整性。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-R003",
+      "status": "SUSPECTED_EVIDENCE",
+      "reason": "候选文字包含 36个月、版本迭代、补丁更新和功能优化，但语义对应关系需人工复核。",
+      "judgmentBasis": "引用第 2 页相关候选文字，不将近似表达自动视为等价。",
+      "manualCheckPrompt": "请人工判断服务期限、费用边界和服务内容是否与检查要求对应。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-R004",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "reason": "候选文字仅描述原厂技术支持和授权协助，材料充分性需人工复核。",
+      "judgmentBasis": "引用第 3 页相关候选文字，未见正式授权函字段。",
+      "manualCheckPrompt": "请人工补查授权函、授权范围、授权期限及签发主体。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-R005",
+      "status": "CONFLICTING_EVIDENCE",
+      "reason": "两个候选位置分别记载 30 分钟和 2 小时响应时限，需人工复核冲突。",
+      "judgmentBasis": "同时引用第 4 页的两处候选文字，不自动选择其中一处。",
+      "manualCheckPrompt": "请人工核对适用章节、服务级别和最终有效版本。",
+      "referencedEvidenceIndices": [0, 1]
+    },
+    {
+      "itemId": "ITEM-R006",
+      "status": "UNABLE_TO_JUDGE",
+      "reason": "候选文字仅指向附件三，缺少附件正文，需人工补充材料后复核。",
+      "judgmentBasis": "引用第 5 页附件清单候选文字，现有文件不足以继续判断。",
+      "manualCheckPrompt": "请人工补充附件三《现场服务人员名单》并核对人员数量和服务周期。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-R007",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选文字包含合成证书名称、编号和有效期，仍需人工复核字段对应关系。",
+      "judgmentBasis": "引用第 1 页明确候选文字，并保留人工复核要求。",
+      "manualCheckPrompt": "请人工核对证书字段、认证范围和材料完整性。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-R008",
+      "status": "NOT_FOUND",
+      "reason": "未检索到与检查要求对应的候选文字，需人工复核全文及附件目录。",
+      "judgmentBasis": "候选证据列表为空，不据此扩展为其他结论。",
+      "manualCheckPrompt": "请人工复核全文及未随 demo 提供的附件。",
+      "referencedEvidenceIndices": []
+    },
+    {
+      "itemId": "ITEM-R009",
+      "status": "SUSPECTED_EVIDENCE",
+      "reason": "候选文字提到定期备份，但未给出每日或每周周期，需人工复核。",
+      "judgmentBasis": "引用第 2 页模糊候选文字，不自动推断具体周期。",
+      "manualCheckPrompt": "请人工核对备份频率、保留周期和恢复安排。",
+      "referencedEvidenceIndices": [0]
+    },
+    {
+      "itemId": "ITEM-R010",
+      "status": "CLEAR_EVIDENCE",
+      "reason": "候选文字明确记载 90 个自然日内提交终验资料，仍需人工复核起算口径。",
+      "judgmentBasis": "引用第 5 页明确候选文字，并保留人工复核要求。",
+      "manualCheckPrompt": "请人工核对时间起点、里程碑和资料范围。",
+      "referencedEvidenceIndices": [0]
+    }
+  ]
+}
