@@ -12,6 +12,9 @@ Supported:
 - Single DOCX or text-layer PDF proposal parsing.
 - Recommended unified CLI input using `--proposal` for both DOCX and text-layer PDF.
 - Local PDF text extraction using `pypdf==6.14.2`.
+- Explicit embedded-image export for PDFs using `pypdf` and Pillow.
+- Targeted embedded-image extraction from retrieval candidate pages with
+  checklist and retrieval-context manifest associations.
 - Paragraph, heading, and table-row extraction.
 - Lightweight image-anchor detection.
 - Deterministic candidate evidence retrieval from text, tables, and nearby image-anchor text.
@@ -24,6 +27,8 @@ Deferred:
 - Scanned or image-only PDF.
 - OCR.
 - Image content recognition.
+- Page rendering or scanned-page image fallback.
+- Local or online image-recognition provider calls and image upload.
 - Rendered page number mapping for DOCX.
 - Real LLM provider implementation.
 - Multi-file proposal package support.
@@ -116,6 +121,17 @@ Use Skill root as cwd. Use absolute task-workspace paths for user inputs and out
      --out "<absolute_task_workspace>/candidates.json"
    ```
 
+   To extract embedded raster images only from pages selected by retrieval, add
+   `--image-mode targeted`. The command writes
+   `image_evidence_manifest.json` and `images/` beside `candidates.json`:
+   ```bash
+   python -m biddeer_checker.cli retrieve \
+     --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" \
+     --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" \
+     --out "<absolute_task_workspace>/candidates.json" \
+     --image-mode targeted
+   ```
+
    *Note: `--docx` is kept for backward compatibility. New workflows should use `--proposal`.*
 
 3. **External Judgments Required:** `judgments.json` must be prepared externally. This package does not contain a built-in real LLM provider. You must construct or mock `judgments.json` based on the `candidates.json` structure for testing.
@@ -173,7 +189,11 @@ ITEM-001,项目经理配置要求,须配备1名具备相关高级职称的项目
 
 The proposal input (supplied via `--proposal`) accepts:
 - **DOCX**: The proposal file must be a readable `.docx` file. WPS documents should be saved as standard Office Open XML `.docx` before processing. The parser extracts text, tables, heading context, and image anchors. It does not read image content.
-- **PDF**: A valid vector/text-layer `.pdf` file. Scanned, encrypted, or image-only PDFs are rejected. It does not support OCR, PDF image extraction, or signature/seal authenticity verification.
+- **PDF**: A valid vector/text-layer `.pdf` file. Scanned, encrypted, or
+  image-only PDFs are rejected by targeted retrieval. Explicit image modes can
+  export extractable embedded raster objects, but do not perform OCR, image
+  recognition, page rendering, upload, or signature/seal authenticity
+  verification.
 
 When the input is a text-layer PDF, the generated CSV report's `证据位置` (Evidence Location) column will include the PDF filename and the original 1-based page number, formatted as:
 `text_layer_chinese.pdf > 第 1 页`
@@ -256,6 +276,7 @@ The implemented split-step CLI is available through the Python module entrypoint
 # Recommended unified proposal input:
 python -m biddeer_checker.cli retrieve --csv "examples/quickstart/sample_checklist.csv" --proposal "examples/quickstart/sample_proposal.docx" --out "<absolute_task_workspace>/candidates.json"
 python -m biddeer_checker.cli retrieve --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" --out "<absolute_task_workspace>/candidates.json"
+python -m biddeer_checker.cli retrieve --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" --out "<absolute_task_workspace>/candidates.json" --image-mode targeted
 
 # Legacy docx compatibility (kept for backward compatibility):
 python -m biddeer_checker.cli retrieve --csv "examples/quickstart/sample_checklist.csv" --docx "examples/quickstart/sample_proposal.docx" --out "<absolute_task_workspace>/candidates.json"
@@ -273,9 +294,27 @@ No console script entrypoint is currently documented for this package. Use the m
 
 It performs deterministic parsing and candidate evidence retrieval only. It does not call a real LLM and does not perform evidence reasoning.
 
+`--image-mode` accepts:
+
+- `disabled` (default): text-only retrieval; no image manifest and no Pillow
+  requirement at runtime.
+- `exhaustive-export`: export all extractable embedded PDF raster images with
+  `relatedCheckItemId: "UNASSIGNED"`.
+- `targeted`: after text retrieval, export embedded raster images only from
+  candidate PDF pages and associate them with checklist IDs and bounded
+  retrieval context.
+
+Image modes write local artifacts only to the external task workspace. They do
+not perform OCR, image recognition, provider calls, upload, page rendering, or
+authenticity/compliance judgment. For DOCX input, image extraction is skipped
+with a diagnostic while normal text retrieval continues.
+
 Supported formats:
 - **DOCX**: Parses text, tables, headings, and image anchors.
-- **PDF**: Parses text-layer PDFs locally using `pypdf==6.14.2` and extracts physical pages. Image-only (scanned), encrypted, or invalid PDFs are rejected with clear errors. OCR and image content extraction are not supported.
+- **PDF**: Parses text-layer PDFs locally using `pypdf==6.14.2` and extracts
+  physical pages. Image-only (scanned), encrypted, or invalid PDFs are rejected
+  with clear errors. Explicit image modes support embedded raster extraction
+  only; OCR and image content recognition are not supported.
 
 ### `report`
 

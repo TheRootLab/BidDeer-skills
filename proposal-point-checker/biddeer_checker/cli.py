@@ -1,12 +1,22 @@
 import argparse
 import json
+import sys
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from biddeer_checker.checklist_model.models import ChecklistItem
 from biddeer_checker.checklist_model.parser import CSVChecklistParser
+from biddeer_checker.document_parser.candidate_page_context import (
+    adapt_to_candidate_contexts,
+)
+from biddeer_checker.document_parser.file_type_detector import FileTypeDetector
+from biddeer_checker.document_parser.image_evidence_manifest import (
+    write_manifest_and_images,
+    write_pillow_missing_manifest,
+)
 from biddeer_checker.document_parser.models import ImageObject, UserFacingLocator
+from biddeer_checker.document_parser.pdf_image_extractor import PdfImageExtractor
 from biddeer_checker.document_parser.proposal_parser_dispatcher import ProposalParserDispatcher
 from biddeer_checker.evidence_reasoning.models import (
     EvidenceStatus,
@@ -42,6 +52,16 @@ def _build_parser() -> argparse.ArgumentParser:
     retrieve_parser.add_argument("--docx", required=False)
     retrieve_parser.add_argument("--proposal", required=False)
     retrieve_parser.add_argument("--out", required=True)
+    retrieve_parser.add_argument(
+        "--image-mode",
+        choices=("disabled", "exhaustive-export", "targeted"),
+        default="disabled",
+        help=(
+            "Image extraction mode. 'disabled': text-only (default). "
+            "'exhaustive-export': extract all embedded images. "
+            "'targeted': extract embedded images only from candidate pages."
+        ),
+    )
     retrieve_parser.set_defaults(handler=_run_retrieve)
 
     report_parser = subparsers.add_parser(
@@ -73,8 +93,14 @@ def _run_retrieve(args: argparse.Namespace) -> int:
     if errors:
         raise ValueError(f"CSV checklist parse failed: {errors}")
 
+    if args.image_mode == "exhaustive-export":
+        _run_image_extraction(proposal_path, args.out)
+
     document = ProposalParserDispatcher().parse(proposal_path)
     packages = retrieve_evidence(items, document)
+
+    if args.image_mode == "targeted":
+        _run_targeted_image_extraction(proposal_path, args.out, packages)
 
     payload = {
         "schemaVersion": CANDIDATES_SCHEMA_VERSION,
@@ -82,6 +108,110 @@ def _run_retrieve(args: argparse.Namespace) -> int:
     }
     _write_json(args.out, payload)
     return 0
+
+
+def _run_image_extraction(proposal_path: str, candidates_out: str) -> None:
+    workspace = Path(candidates_out).parent
+    source_doc_name = Path(proposal_path).name
+    _check_workspace_collision(str(workspace))
+
+    file_type = FileTypeDetector().detect(proposal_path)
+    if file_type != "PDF":
+        print(
+            "Image extraction is only supported for PDF proposals. "
+            f"Skipping extraction for {file_type} file.",
+            file=sys.stderr,
+        )
+        return
+
+    extractor = PdfImageExtractor()
+    if not extractor.pillow_available():
+        print(
+            "Image extraction requires Pillow. Install image extraction "
+            "dependencies or review image evidence manually.",
+            file=sys.stderr,
+        )
+        write_pillow_missing_manifest(str(workspace), source_doc_name)
+        return
+
+    items, global_warnings = extractor.extract_exhaustive(
+        pdf_path=proposal_path,
+        images_dir=str(workspace / "images"),
+    )
+    write_manifest_and_images(
+        workspace_dir=str(workspace),
+        source_doc_name=source_doc_name,
+        extraction_mode="exhaustive_export",
+        items=items,
+        global_warnings=global_warnings,
+    )
+    for warning in global_warnings:
+        print(f"Image extraction warning: {warning}", file=sys.stderr)
+
+
+def _run_targeted_image_extraction(
+    proposal_path: str,
+    candidates_out: str,
+    packages: List[EvidencePackage],
+) -> None:
+    workspace = Path(candidates_out).parent
+    source_doc_name = Path(proposal_path).name
+    file_type = FileTypeDetector().detect(proposal_path)
+    if file_type != "PDF":
+        print(
+            "Image extraction is only supported for PDF proposals. "
+            f"Skipping extraction for {file_type} file.",
+            file=sys.stderr,
+        )
+        return
+
+    _check_workspace_collision(str(workspace))
+    contexts = adapt_to_candidate_contexts(source_doc_name, packages)
+
+    extractor = PdfImageExtractor()
+    if not extractor.pillow_available():
+        print(
+            "Image extraction requires Pillow. Install image extraction "
+            "dependencies or review image evidence manually.",
+            file=sys.stderr,
+        )
+        write_pillow_missing_manifest(
+            workspace_dir=str(workspace),
+            source_doc_name=source_doc_name,
+            extraction_mode="targeted",
+        )
+        return
+
+    items, global_warnings = extractor.extract_targeted(
+        pdf_path=proposal_path,
+        images_dir=str(workspace / "images"),
+        candidate_contexts=contexts,
+    )
+    write_manifest_and_images(
+        workspace_dir=str(workspace),
+        source_doc_name=source_doc_name,
+        extraction_mode="targeted",
+        items=items,
+        global_warnings=global_warnings,
+    )
+    for warning in global_warnings:
+        print(f"Image extraction warning: {warning}", file=sys.stderr)
+
+
+def _check_workspace_collision(workspace_dir: str) -> None:
+    workspace = Path(workspace_dir)
+    manifest_path = workspace / "image_evidence_manifest.json"
+    images_path = workspace / "images"
+    if manifest_path.exists():
+        raise FileExistsError(
+            f"Image evidence manifest already exists at {manifest_path}. "
+            "Specify a different --out directory or remove the existing manifest."
+        )
+    if images_path.exists():
+        raise FileExistsError(
+            f"Image output directory already exists at {images_path}. "
+            "Specify a different --out directory or remove the existing directory."
+        )
 
 
 def _run_report(args: argparse.Namespace) -> int:

@@ -208,3 +208,39 @@ def test_standalone_cli_smoke(tmp_path: Path):
     pdf_rows = list(csv.reader(io.StringIO(pdf_csv_text, newline="")))
     assert pdf_rows[0] == CSV_HEADERS
     assert any("text_layer_chinese.pdf > 第 1 页" in row[5] for row in pdf_rows[1:])
+
+
+def test_targeted_image_mode_cli_smoke(tmp_path: Path):
+    pkg_root = Path(__file__).parent.parent
+    from tests.fixtures.generate_synthetic_pdf import make_test_pdf
+
+    pdf_path = make_test_pdf(
+        str(tmp_path / "targeted.pdf"),
+        [(4, 4, (255, 0, 0))],
+        text="ISO27001 certificate evidence",
+    )
+    candidates_path = tmp_path / "candidates.json"
+    command = [
+        sys.executable,
+        "-m",
+        "biddeer_checker.cli",
+        "retrieve",
+        "--csv",
+        str(pkg_root / "tests" / "fixtures" / "test_fixtures.csv"),
+        "--proposal",
+        str(pdf_path),
+        "--out",
+        str(candidates_path),
+        "--image-mode",
+        "targeted",
+    ]
+
+    subprocess.run(command, cwd=str(pkg_root), check=True)
+
+    manifest = json.loads(
+        (tmp_path / "image_evidence_manifest.json").read_text(encoding="utf-8")
+    )
+    assert candidates_path.exists()
+    assert manifest["extractionMode"] == "targeted"
+    assert manifest["items"][0]["relatedCheckItemId"] == "ITEM-004"
+    assert manifest["items"][0]["recognitionMethod"] == "none"
