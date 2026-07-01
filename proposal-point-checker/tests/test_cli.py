@@ -169,3 +169,197 @@ def test_cli_retrieve_unsupported_file_error(tmp_path):
                 "--proposal", "proposal.doc",
                 "--out", str(out_path)
             ])
+
+
+def test_retrieve_disabled_is_default_and_creates_no_manifest(tmp_path):
+    output_path = tmp_path / "candidates.json"
+    assert main(
+        [
+            "retrieve",
+            "--csv",
+            "tests/fixtures/test_fixtures.csv",
+            "--proposal",
+            "tests/fixtures/pdf/text_layer_chinese.pdf",
+            "--out",
+            str(output_path),
+        ]
+    ) == 0
+    assert output_path.exists()
+    assert not (tmp_path / "image_evidence_manifest.json").exists()
+
+
+def test_retrieve_disabled_never_checks_pillow(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "biddeer_checker.document_parser.pdf_image_extractor._pillow_available",
+        lambda: (_ for _ in ()).throw(
+            AssertionError("disabled mode must not check Pillow")
+        ),
+    )
+    output_path = tmp_path / "candidates.json"
+    assert main(
+        [
+            "retrieve",
+            "--csv",
+            "tests/fixtures/test_fixtures.csv",
+            "--proposal",
+            "tests/fixtures/pdf/text_layer_chinese.pdf",
+            "--out",
+            str(output_path),
+        ]
+    ) == 0
+    assert output_path.exists()
+
+
+def test_retrieve_exhaustive_export_behavior_is_preserved(tmp_path):
+    from tests.fixtures.generate_synthetic_pdf import make_test_pdf
+
+    pdf_path = make_test_pdf(str(tmp_path / "proposal.pdf"), text="ISO27001")
+    output_path = tmp_path / "candidates.json"
+    assert main(
+        [
+            "retrieve",
+            "--csv",
+            "tests/fixtures/test_fixtures.csv",
+            "--proposal",
+            str(pdf_path),
+            "--out",
+            str(output_path),
+            "--image-mode",
+            "exhaustive-export",
+        ]
+    ) == 0
+    manifest = json.loads(
+        (tmp_path / "image_evidence_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["extractionMode"] == "exhaustive_export"
+    assert manifest["items"][0]["relatedCheckItemId"] == "UNASSIGNED"
+
+
+def test_retrieve_targeted_extracts_only_retrieval_candidate_pages(tmp_path):
+    from tests.fixtures.generate_synthetic_pdf import make_multi_page_test_pdf
+
+    pdf_path = make_multi_page_test_pdf(
+        str(tmp_path / "proposal.pdf"),
+        [
+            [(4, 4, (255, 0, 0))],
+            [(8, 8, (0, 255, 0))],
+            [(12, 12, (0, 0, 255))],
+        ],
+        page_texts=["ISO27001 page one", "unmatched", "ISO27001 page three"],
+    )
+    output_path = tmp_path / "candidates.json"
+    assert main(
+        [
+            "retrieve",
+            "--csv",
+            "tests/fixtures/test_fixtures.csv",
+            "--proposal",
+            str(pdf_path),
+            "--out",
+            str(output_path),
+            "--image-mode",
+            "targeted",
+        ]
+    ) == 0
+
+    manifest = json.loads(
+        (tmp_path / "image_evidence_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["extractionMode"] == "targeted"
+    assert [item["sourcePageNum"] for item in manifest["items"]] == [1, 3]
+    assert all(
+        item["relatedCheckItemId"] == "ITEM-004" for item in manifest["items"]
+    )
+    assert all(
+        item["nearbyTextScope"] == "retrieval_context"
+        for item in manifest["items"]
+    )
+    assert sorted(path.name for path in (tmp_path / "images").iterdir()) == [
+        "img_0001_01_01.png",
+        "img_0003_01_01.png",
+    ]
+
+
+def test_retrieve_targeted_docx_continues_without_manifest(tmp_path, capsys):
+    output_path = tmp_path / "candidates.json"
+    assert main(
+        [
+            "retrieve",
+            "--csv",
+            "tests/fixtures/test_fixtures.csv",
+            "--docx",
+            "tests/fixtures/test_fixtures.docx",
+            "--out",
+            str(output_path),
+            "--image-mode",
+            "targeted",
+        ]
+    ) == 0
+    assert output_path.exists()
+    assert not (tmp_path / "image_evidence_manifest.json").exists()
+    assert "only supported for PDF proposals" in capsys.readouterr().err
+
+
+def test_retrieve_targeted_missing_pillow_writes_unavailable_manifest(
+    tmp_path, monkeypatch
+):
+    from tests.fixtures.generate_synthetic_pdf import make_test_pdf
+
+    pdf_path = make_test_pdf(str(tmp_path / "proposal.pdf"), text="ISO27001")
+    monkeypatch.setattr(
+        "biddeer_checker.document_parser.pdf_image_extractor._pillow_available",
+        lambda: False,
+    )
+    output_path = tmp_path / "candidates.json"
+    assert main(
+        [
+            "retrieve",
+            "--csv",
+            "tests/fixtures/test_fixtures.csv",
+            "--proposal",
+            str(pdf_path),
+            "--out",
+            str(output_path),
+            "--image-mode",
+            "targeted",
+        ]
+    ) == 0
+    manifest = json.loads(
+        (tmp_path / "image_evidence_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["extractionMode"] == "targeted"
+    assert manifest["extractionState"] == "unavailable"
+    assert manifest["warnings"] == ["PILLOW_MISSING"]
+    assert output_path.exists()
+
+
+def test_retrieve_targeted_malformed_context_fails_before_artifacts(
+    tmp_path, monkeypatch
+):
+    from tests.fixtures.generate_synthetic_pdf import make_test_pdf
+
+    pdf_path = make_test_pdf(str(tmp_path / "proposal.pdf"), text="ISO27001")
+    monkeypatch.setattr(
+        "biddeer_checker.cli.adapt_to_candidate_contexts",
+        lambda *_args: (_ for _ in ()).throw(
+            ValueError("Malformed candidate page locator")
+        ),
+    )
+    output_path = tmp_path / "candidates.json"
+    with pytest.raises(ValueError, match="Malformed candidate page locator"):
+        main(
+            [
+                "retrieve",
+                "--csv",
+                "tests/fixtures/test_fixtures.csv",
+                "--proposal",
+                str(pdf_path),
+                "--out",
+                str(output_path),
+                "--image-mode",
+                "targeted",
+            ]
+        )
+    assert not output_path.exists()
+    assert not (tmp_path / "image_evidence_manifest.json").exists()
+    assert not (tmp_path / "images").exists()

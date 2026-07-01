@@ -12,6 +12,10 @@ The current v0.1 pipeline supports:
 - Parsing a single DOCX proposal or text-layer PDF proposal in physical document order.
 - Recommending unified CLI input using `--proposal` for both DOCX and text-layer PDF.
 - Local PDF text extraction using `pypdf==6.14.2`.
+- Explicit local export of extractable embedded PDF raster images.
+- Targeted embedded-image extraction from pages selected by existing retrieval,
+  with checklist IDs and retrieval-context text in an
+  `image-evidence-v0.1` manifest.
 - Extracting paragraph text, table rows, heading context, and lightweight image anchors.
 - Retrieving candidate evidence from parsed text, table rows, and nearby image-anchor text.
 - Passing retrieved evidence packages into a caller-provided reasoning adapter.
@@ -41,6 +45,9 @@ Unsupported in v0.1:
 - Scanned or image-only PDF.
 - OCR.
 - Image content recognition.
+- Page rendering or scanned-page fallback.
+- Local or online recognition-provider calls.
+- Online upload of PDFs or extracted images.
 - DOCX rendered page number mapping (no fabrication of page numbers for DOCX).
 - Multi-file proposal packages.
 - Electronic bidding system field checks.
@@ -121,6 +128,7 @@ The currently supported module entrypoints are:
 # Recommended unified proposal input:
 python -m biddeer_checker.cli retrieve --csv checklist.csv --proposal proposal.docx --out candidates.json
 python -m biddeer_checker.cli retrieve --csv checklist.csv --proposal proposal.pdf --out candidates.json
+python -m biddeer_checker.cli retrieve --csv checklist.csv --proposal proposal.pdf --out candidates.json --image-mode targeted
 
 # Legacy compatibility (docx only):
 python -m biddeer_checker.cli retrieve --csv checklist.csv --docx proposal.docx --out candidates.json
@@ -134,13 +142,25 @@ Do not assume a console script such as `biddeer_checker` is installed unless a f
 
 For lightweight Agent runtimes, the supported workflow is:
 
-1. Run `python -m biddeer_checker.cli retrieve` with a CSV checklist and a proposal (via `--proposal`) to write `candidates.json`.
+1. Run `python -m biddeer_checker.cli retrieve` with a CSV checklist and a proposal (via `--proposal`) to write `candidates.json`. For a text-layer PDF, add `--image-mode targeted` only when local extraction of embedded raster images from retrieval candidate pages is required.
 2. Judge each candidate package externally through the Agent runtime, a human process, or a mock workflow.
 3. Write `judgments.json` using the current judgments schema and exactly one of the six `EvidenceStatus` values for each checklist item.
 4. Run `python -m biddeer_checker.cli report` with `candidates.json` and `judgments.json` to write the Markdown report.
 5. Add `--format csv` when the reviewer needs a CSV report for Excel / WPS manual review.
 
-The `retrieve` command does not call a real LLM. For DOCX, it parses headings, paragraph text, tables, and image anchors. For PDF, it parses text-layer PDF content locally using `pypdf==6.14.2` and retains page numbers; scanned, encrypted, or invalid PDFs are rejected with clear errors. It does not support OCR, image extraction, or rendered page mapping for DOCX.
+The `retrieve` command does not call a real LLM. For DOCX, it parses headings,
+paragraph text, tables, and image anchors. For PDF, it parses text-layer content
+locally using `pypdf==6.14.2` and retains page numbers; scanned, encrypted, or
+invalid PDFs are rejected with clear errors.
+
+`--image-mode disabled` is the default and writes no image manifest.
+`--image-mode exhaustive-export` exports all extractable embedded PDF raster
+images. `--image-mode targeted` runs after retrieval and exports embedded raster
+images only from candidate pages, recording `relatedCheckItemId` and bounded
+retrieval-context `nearbyText`. These modes do not perform OCR, image
+recognition, provider calls, online upload, page rendering, or authenticity and
+business judgments. DOCX image extraction is unsupported and is skipped without
+preventing normal text retrieval.
 
 The `report` command does not include a real LLM Provider. It consumes externally prepared judgments and renders human-review Markdown or CSV reports. CSV is a review-assist format for filtering and checking evidence in Excel / WPS. It must not be used to output final bid rejection, pass/fail, compliance adjudication, or risk-level decisions.
 
@@ -167,7 +187,10 @@ Proposal document:
 
 - Must be DOCX or vector/text-layer PDF.
 - If DOCX, must be readable, unencrypted Office Open XML. WPS documents should be saved as standard `.docx` first.
-- If PDF, must be parsed locally with `pypdf==6.14.2`. Scanned, encrypted, or invalid PDFs are rejected with clear errors. OCR, image extraction, and seal authenticity checks are not supported.
+- If PDF, must be parsed locally with `pypdf==6.14.2`. Scanned, encrypted, or
+  invalid PDFs are rejected with clear errors. Explicit image modes can extract
+  embedded raster objects only; OCR, image recognition, page rendering, upload,
+  and seal authenticity checks are not supported.
 - Should contain extractable text for reliable retrieval.
 
 ## Output Rules
