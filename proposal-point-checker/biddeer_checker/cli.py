@@ -78,7 +78,51 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     report_parser.set_defaults(handler=_run_report)
 
+    image_ocr_parser = subparsers.add_parser(
+        "image-ocr-review",
+        help="Run optional local OCR review on extracted PDF image artifacts.",
+    )
+    image_ocr_parser.add_argument("--workspace", required=True)
+    image_ocr_parser.add_argument("--manifest", required=True)
+    image_ocr_parser.add_argument("--out", required=True)
+    image_ocr_parser.add_argument("--device", default="cpu")
+    image_ocr_parser.add_argument(
+        "--det-model",
+        default="PP-OCRv6_tiny_det",
+    )
+    image_ocr_parser.add_argument(
+        "--rec-model",
+        default="PP-OCRv6_tiny_rec",
+    )
+    image_ocr_parser.add_argument("--lang", default="ch")
+    image_ocr_parser.set_defaults(handler=_run_image_ocr_review)
+
     return parser
+
+
+def _run_image_ocr_review(args: argparse.Namespace) -> int:
+    from biddeer_checker.document_parser.image_ocr_review_workflow import (
+        main as image_ocr_review_main,
+    )
+
+    return image_ocr_review_main(
+        [
+            "--workspace",
+            args.workspace,
+            "--manifest",
+            args.manifest,
+            "--out",
+            args.out,
+            "--device",
+            args.device,
+            "--det-model",
+            args.det_model,
+            "--rec-model",
+            args.rec_model,
+            "--lang",
+            args.lang,
+        ]
+    )
 
 
 def _run_retrieve(args: argparse.Namespace) -> int:
