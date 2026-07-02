@@ -244,3 +244,26 @@ def test_targeted_image_mode_cli_smoke(tmp_path: Path):
     assert manifest["extractionMode"] == "targeted"
     assert manifest["items"][0]["relatedCheckItemId"] == "ITEM-004"
     assert manifest["items"][0]["recognitionMethod"] == "none"
+
+
+def test_image_ocr_review_subcommand_help():
+    pkg_root = Path(__file__).parent.parent
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "biddeer_checker.cli",
+            "image-ocr-review",
+            "--help",
+        ],
+        cwd=str(pkg_root),
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert "--workspace" in result.stdout
+    assert "--manifest" in result.stdout
+    assert "--det-model" in result.stdout
+    assert "--rec-model" in result.stdout

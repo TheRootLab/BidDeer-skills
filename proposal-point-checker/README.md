@@ -15,6 +15,10 @@ Supported:
 - Explicit embedded-image export for PDFs using `pypdf` and Pillow.
 - Targeted embedded-image extraction from retrieval candidate pages with
   checklist and retrieval-context manifest associations.
+- Optional local PaddleOCR image review over already-extracted PDF
+  embedded-image artifacts.
+- `paddleocr-result-v0.1` JSON artifacts and a human-readable
+  `image_ocr_review_report.md` for supplemental manual review.
 - Paragraph, heading, and table-row extraction.
 - Lightweight image-anchor detection.
 - Deterministic candidate evidence retrieval from text, tables, and nearby image-anchor text.
@@ -24,15 +28,15 @@ Supported:
 
 Deferred:
 
-- Scanned or image-only PDF.
-- OCR.
-- Image content recognition.
-- Page rendering or scanned-page image fallback.
-- Local or online image-recognition provider calls and image upload.
+- Scanned or image-only PDF page rendering fallback.
+- OCR integration into evidence retrieval.
+- OCR integration into final bidder reports.
+- Docker/GPU production OCR path.
+- Online image-recognition provider calls and image upload.
 - Rendered page number mapping for DOCX.
 - Real LLM provider implementation.
 - Multi-file proposal package support.
-- Seal or certificate authenticity judgment.
+- Certificate, seal, or signature authenticity judgment.
 - Electronic bidding system field checks.
 - Final compliance, bid rejection, pass/fail, or risk-level output.
 
@@ -131,6 +135,20 @@ Use Skill root as cwd. Use absolute task-workspace paths for user inputs and out
      --out "<absolute_task_workspace>/candidates.json" \
      --image-mode targeted
    ```
+
+   After image extraction, optionally run local OCR review:
+   ```bash
+   python -m biddeer_checker.cli image-ocr-review \
+     --workspace "<absolute_task_workspace>" \
+     --manifest "<absolute_task_workspace>/image_evidence_manifest.json" \
+     --out "<absolute_task_workspace>/image_ocr_review_report.md" \
+     --device cpu
+   ```
+
+   OCR is optional and requires installing `requirements-ocr.txt`. It runs
+   locally, does not upload PDF or image content, and does not decide pass/fail,
+   risk level, bid rejection, certificate validity, seal authenticity, or
+   signature authenticity. See [`docs/ocr-setup.md`](docs/ocr-setup.md).
 
    *Note: `--docx` is kept for backward compatibility. New workflows should use `--proposal`.*
 
@@ -277,6 +295,7 @@ The implemented split-step CLI is available through the Python module entrypoint
 python -m biddeer_checker.cli retrieve --csv "examples/quickstart/sample_checklist.csv" --proposal "examples/quickstart/sample_proposal.docx" --out "<absolute_task_workspace>/candidates.json"
 python -m biddeer_checker.cli retrieve --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" --out "<absolute_task_workspace>/candidates.json"
 python -m biddeer_checker.cli retrieve --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" --out "<absolute_task_workspace>/candidates.json" --image-mode targeted
+python -m biddeer_checker.cli image-ocr-review --workspace "<absolute_task_workspace>" --manifest "<absolute_task_workspace>/image_evidence_manifest.json" --out "<absolute_task_workspace>/image_ocr_review_report.md" --device cpu
 
 # Legacy docx compatibility (kept for backward compatibility):
 python -m biddeer_checker.cli retrieve --csv "examples/quickstart/sample_checklist.csv" --docx "examples/quickstart/sample_proposal.docx" --out "<absolute_task_workspace>/candidates.json"
@@ -314,7 +333,22 @@ Supported formats:
 - **PDF**: Parses text-layer PDFs locally using `pypdf==6.14.2` and extracts
   physical pages. Image-only (scanned), encrypted, or invalid PDFs are rejected
   with clear errors. Explicit image modes support embedded raster extraction
-  only; OCR and image content recognition are not supported.
+  only. Optional OCR review is a separate `image-ocr-review` command and does
+  not change retrieval output.
+
+### `image-ocr-review`
+
+`image-ocr-review` is an optional local-only review step for embedded-image
+artifacts already written by `retrieve --image-mode targeted` or
+`retrieve --image-mode exhaustive-export`.
+
+It reads `image_evidence_manifest.json`, writes
+`ocr_results/<imageId>.paddleocr.json`, and generates
+`image_ocr_review_report.md`. OCR text is supplemental manual-review material;
+it is not added to candidate retrieval or final bidder reports.
+
+Install `requirements-ocr.txt` before running real PaddleOCR. The default Skill
+installation remains free of PaddleOCR, PaddlePaddle, and PaddleX.
 
 ### `report`
 
