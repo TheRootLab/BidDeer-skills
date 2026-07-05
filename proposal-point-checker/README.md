@@ -379,5 +379,6 @@ Release package documentation updates must not:
 - Modify `tests/**`.
 - Add a real LLM provider.
 - Modify CLI implementation or add console script entrypoints.
-- Add scanned PDF/OCR/image recognition/DOCX page mapping.
+- Add scanned-PDF rendering, integrate OCR into retrieval or final reports,
+  broaden image recognition, or add DOCX page mapping.
 - Change fixture semantics or validation assertions.

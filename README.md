@@ -22,6 +22,8 @@ BidDeer Skills 是一个面向招标文件分析、投标文件审查和投标�
 
 `proposal-point-checker` 用于根据人工提供的审核点清单，对投标文件（当前支持 DOCX 格式以及 text-layer 矢量 PDF 格式）进行逐项检查。
 
+BidDeer `proposal-point-checker` 用于根据用户提供的检查点清单，对投标文件进行逐项检索、证据定位和辅助审查。它不替代人工最终判断，也不输出废标保证结论。
+
 该 Skill 会围绕每一个审核点，在投标文件中查找对应证据，并输出：
 
 * 证据状态
@@ -39,7 +41,9 @@ BidDeer Skills 是一个面向招标文件分析、投标文件审查和投标�
 * 技术参数与配置响应检查
 * 售后服务、培训、实施进度、应急预案等承诺检查
 * 技术响应表、偏离表、正文和附件之间的一致性检查
-* 暗标信息、签字盖章、目录页码、附件索引等封标前检查
+* 暗标信息、签字盖章、目录页码、附件索引等材料的存在性和位置检查
+
+对于 text-layer PDF，当前还支持显式导出内嵌图片、按候选页定向提取图片并生成 `image_evidence_manifest.json`。用户可另行安装可选 OCR 依赖，对已提取图片运行本地 `image-ocr-review` 辅助审查；OCR 不进入默认安装路径，也不进入候选证据检索或最终报告判断。
 
 该 Skill 不自动判断是否废标，不替代人工复核，不提供最终投标结论。
 
@@ -85,15 +89,17 @@ BidDeer Skills 是一个面向招标文件分析、投标文件审查和投标�
 
 `proposal-point-checker/examples/`
 
-示例输入：
+最小入门示例：
 
-`proposal-point-checker/examples/sample_checklist.md`
+`proposal-point-checker/examples/quickstart/`
 
-`proposal-point-checker/examples/sample_proposal_excerpt.txt`
+可直接用于录屏和回归验证的完整合成示例：
 
-示例输出：
+`proposal-point-checker/examples/demos/pdf-basic/`
 
-`proposal-point-checker/examples/sample_output.md`
+`proposal-point-checker/examples/demos/reasoning-status/`
+
+这些 demo 覆盖 text-layer PDF 检索、PDF 页码来源记录、Markdown / CSV 报告和六种证据状态，不代表真实 LLM 或真实 OCR 运行结果。
 
 ---
 
@@ -118,13 +124,18 @@ biddeer-skills/
     ├── templates/
     │   └── io-contract.md
     ├── examples/
-    │   ├── sample_checklist.csv
-    │   ├── sample_checklist.md
-    │   ├── sample_proposal_excerpt.txt
-    │   └── sample_output.md
+    │   ├── quickstart/
+    │   ├── demos/
+    │   │   ├── pdf-basic/
+    │   │   └── reasoning-status/
+    │   └── tools/
+    ├── docs/
+    │   ├── runtime-environment.md
+    │   └── ocr-setup.md
     ├── schemas/
     ├── smoke_tests/
     ├── requirements.txt
+    ├── requirements-ocr.txt
     └── requirements-dev.txt
 ```
 
