@@ -16,6 +16,10 @@ The current v0.1 pipeline supports:
 - Targeted embedded-image extraction from pages selected by existing retrieval,
   with checklist IDs and retrieval-context text in an
   `image-evidence-v0.1` manifest.
+- Optional local PaddleOCR review of already-extracted embedded-image
+  artifacts through the separate `image-ocr-review` command.
+- `paddleocr-result-v0.1` artifacts and a supplemental manual-review report
+  that remain separate from candidate retrieval and final bidder reports.
 - Extracting paragraph text, table rows, heading context, and lightweight image anchors.
 - Retrieving candidate evidence from parsed text, table rows, and nearby image-anchor text.
 - Passing retrieved evidence packages into a caller-provided reasoning adapter.
@@ -34,6 +38,14 @@ CSV checklist
 -> Markdown or CSV rendering
 ```
 
+An optional, separate review branch is:
+
+```text
+extracted embedded PDF images
+-> local image-ocr-review
+-> supplemental OCR artifacts and manual-review report
+```
+
 ## Hard Limits
 
 The v0.1 package does not include a real LLM provider.
@@ -42,11 +54,12 @@ Agents must not claim this skill can independently perform semantic reasoning un
 
 Unsupported in v0.1:
 
-- Scanned or image-only PDF.
-- OCR.
-- Image content recognition.
-- Page rendering or scanned-page fallback.
-- Local or online recognition-provider calls.
+- Candidate retrieval from scanned or image-only PDFs.
+- Page rendering or OCR fallback for scanned pages.
+- OCR integration into candidate evidence retrieval or final bidder reports.
+- Image recognition beyond optional local text extraction from already-extracted
+  embedded-image artifacts.
+- Online recognition-provider calls.
 - Online upload of PDFs or extracted images.
 - DOCX rendered page number mapping (no fabrication of page numbers for DOCX).
 - Multi-file proposal packages.
@@ -55,7 +68,11 @@ Unsupported in v0.1:
 - Certificate authenticity judgment.
 - Final bid rejection, compliance, pass/fail, or risk-level decisions.
 
-Detected images are only image anchors. The system records where an image appears and nearby text; it does not read image content.
+Image extraction and OCR are explicit, opt-in steps. The default installation
+does not include PaddleOCR, PaddlePaddle, or PaddleX. Optional OCR runs locally
+over previously extracted embedded-image artifacts, does not upload content,
+and produces supplemental review material only. It does not change retrieval,
+judgments, or final reports.
 
 ## Evidence Status Contract
 
@@ -129,6 +146,7 @@ The currently supported module entrypoints are:
 python -m biddeer_checker.cli retrieve --csv checklist.csv --proposal proposal.docx --out candidates.json
 python -m biddeer_checker.cli retrieve --csv checklist.csv --proposal proposal.pdf --out candidates.json
 python -m biddeer_checker.cli retrieve --csv checklist.csv --proposal proposal.pdf --out candidates.json --image-mode targeted
+python -m biddeer_checker.cli image-ocr-review --workspace "<absolute_task_workspace>" --manifest "<absolute_task_workspace>/image_evidence_manifest.json" --out "<absolute_task_workspace>/image_ocr_review_report.md" --device cpu
 
 # Legacy compatibility (docx only):
 python -m biddeer_checker.cli retrieve --csv checklist.csv --docx proposal.docx --out candidates.json
@@ -143,10 +161,13 @@ Do not assume a console script such as `biddeer_checker` is installed unless a f
 For lightweight Agent runtimes, the supported workflow is:
 
 1. Run `python -m biddeer_checker.cli retrieve` with a CSV checklist and a proposal (via `--proposal`) to write `candidates.json`. For a text-layer PDF, add `--image-mode targeted` only when local extraction of embedded raster images from retrieval candidate pages is required.
-2. Judge each candidate package externally through the Agent runtime, a human process, or a mock workflow.
-3. Write `judgments.json` using the current judgments schema and exactly one of the six `EvidenceStatus` values for each checklist item.
-4. Run `python -m biddeer_checker.cli report` with `candidates.json` and `judgments.json` to write the Markdown report.
-5. Add `--format csv` when the reviewer needs a CSV report for Excel / WPS manual review.
+2. Optionally run local `image-ocr-review` over the extracted-image manifest.
+   Keep its artifacts as supplemental manual-review material; do not merge OCR
+   text into `candidates.json` or final bidder reports.
+3. Judge each candidate package externally through the Agent runtime, a human process, or a mock workflow.
+4. Write `judgments.json` using the current judgments schema and exactly one of the six `EvidenceStatus` values for each checklist item.
+5. Run `python -m biddeer_checker.cli report` with `candidates.json` and `judgments.json` to write the Markdown report.
+6. Add `--format csv` when the reviewer needs a CSV report for Excel / WPS manual review.
 
 The `retrieve` command does not call a real LLM. For DOCX, it parses headings,
 paragraph text, tables, and image anchors. For PDF, it parses text-layer content
@@ -161,6 +182,14 @@ retrieval-context `nearbyText`. These modes do not perform OCR, image
 recognition, provider calls, online upload, page rendering, or authenticity and
 business judgments. DOCX image extraction is unsupported and is skipped without
 preventing normal text retrieval.
+
+The separate `image-ocr-review` command reads an existing
+`image_evidence_manifest.json`, writes one local
+`paddleocr-result-v0.1` artifact per selected image, and generates
+`image_ocr_review_report.md`. It is optional, requires the separately installed
+`requirements-ocr.txt`, and keeps PDF and image content on the local machine.
+It does not make validity, authenticity, compliance, pass/fail, bid-rejection,
+or risk-level decisions. See [`docs/ocr-setup.md`](docs/ocr-setup.md).
 
 The `report` command does not include a real LLM Provider. It consumes externally prepared judgments and renders human-review Markdown or CSV reports. CSV is a review-assist format for filtering and checking evidence in Excel / WPS. It must not be used to output final bid rejection, pass/fail, compliance adjudication, or risk-level decisions.
 
@@ -189,8 +218,8 @@ Proposal document:
 - If DOCX, must be readable, unencrypted Office Open XML. WPS documents should be saved as standard `.docx` first.
 - If PDF, must be parsed locally with `pypdf==6.14.2`. Scanned, encrypted, or
   invalid PDFs are rejected with clear errors. Explicit image modes can extract
-  embedded raster objects only; OCR, image recognition, page rendering, upload,
-  and seal authenticity checks are not supported.
+  embedded raster objects only. Optional local OCR review is a separate command;
+  scanned-page rendering, upload, and seal authenticity checks are not supported.
 - Should contain extractable text for reliable retrieval.
 
 ## Output Rules
@@ -219,7 +248,10 @@ The CSV report must:
 Stop and ask for human direction if:
 
 - You need a real LLM provider but none has been supplied.
-- The user asks for scanned PDF, OCR, image content recognition, or DOCX page mapping.
+- The user asks for scanned-PDF OCR, page rendering, OCR integration into
+  retrieval or final reports, online recognition, or DOCX page mapping.
 - The task requires judging certificate authenticity, seal authenticity, or final bid compliance.
-- The available evidence is only inside images.
-- You would need to add dependencies, add console script entrypoints, or expand CLI/runtime behavior beyond Markdown/CSV report rendering.
+- The available evidence is only inside images and the user has not explicitly
+  chosen the optional local extracted-image OCR review workflow.
+- You would need to add dependencies beyond the documented optional OCR set,
+  add console script entrypoints, or expand CLI/runtime behavior.

@@ -62,6 +62,18 @@ python -m biddeer_checker.cli retrieve \
   --proposal "<absolute_task_workspace>/proposal.pdf" \
   --out "<absolute_task_workspace>/candidates.json"
 
+python -m biddeer_checker.cli retrieve \
+  --csv "<absolute_task_workspace>/checklist.csv" \
+  --proposal "<absolute_task_workspace>/proposal.pdf" \
+  --out "<absolute_task_workspace>/candidates.json" \
+  --image-mode targeted
+
+python -m biddeer_checker.cli image-ocr-review \
+  --workspace "<absolute_task_workspace>" \
+  --manifest "<absolute_task_workspace>/image_evidence_manifest.json" \
+  --out "<absolute_task_workspace>/image_ocr_review_report.md" \
+  --device cpu
+
 python -m biddeer_checker.cli report \
   --candidates "<absolute_task_workspace>/candidates.json" \
   --judgments "<absolute_task_workspace>/judgments.json" \
@@ -142,6 +154,18 @@ python -m pip install -r requirements-dev.txt
 
 The runtime contract does not add any dependency.
 
+The optional local extracted-image OCR review workflow has a separate dependency
+set:
+
+```bash
+python -m pip install -r requirements-ocr.txt
+```
+
+PaddleOCR, PaddlePaddle, and PaddleX are not part of the default installation.
+Model/package provisioning is separate from inference; after provisioning,
+inference remains local and does not upload PDF or image content. See
+[`ocr-setup.md`](ocr-setup.md).
+
 ## CLI Entrypoint
 
 The supported CLI entrypoint is the Python module:
@@ -149,6 +173,7 @@ The supported CLI entrypoint is the Python module:
 ```bash
 python -m biddeer_checker.cli retrieve ...
 python -m biddeer_checker.cli report ...
+python -m biddeer_checker.cli image-ocr-review ...
 ```
 
 Do not assume a console script such as `biddeer_checker` exists unless a future packaging PR explicitly adds and validates it.
@@ -163,6 +188,8 @@ Human demo commands may use relative paths. Agent runtime integration should use
 --candidates
 --judgments
 --out
+--workspace
+--manifest
 ```
 
 All documented customer or Agent examples should quote file paths. Quoting avoids failures when paths contain spaces, non-ASCII characters, or shell-significant characters. Output paths are selected by `--out`; production integrations must not hardcode `/tmp` as the only output location.
@@ -275,6 +302,11 @@ OpenCV
 real LLM SDKs
 ```
 
+The default retrieval/report path does not require PaddleOCR. PaddleOCR is used
+only when the operator explicitly installs `requirements-ocr.txt` and runs the
+separate local `image-ocr-review` workflow over already-extracted image
+artifacts. No online OCR provider or upload path is included.
+
 LibreOffice, WPS, or Word may be used only to regenerate demo PDFs from DOCX sources. They are optional demo-generation tools, not runtime dependencies.
 
 ## Offline and Intranet Deployment
@@ -285,18 +317,25 @@ This document does not implement offline packaging. It records the deployment co
 
 ## PDF and DOCX Boundaries
 
-PDF input support is limited to text-layer PDFs parsed locally with `pypdf==6.14.2`.
+Candidate retrieval from PDF input is limited to text-layer PDFs parsed locally
+with `pypdf==6.14.2`.
+
+Explicit `retrieve --image-mode exhaustive-export` and
+`retrieve --image-mode targeted` can export extractable embedded raster images
+and write `image_evidence_manifest.json`. The optional local
+`image-ocr-review` command can review those extracted artifacts separately.
+OCR output does not enter candidate retrieval or final bidder reports.
 
 The following remain unsupported:
 
 ```text
-scanned PDF
-image-only PDF
-OCR
-PDF image extraction
+scanned or image-only PDF retrieval
+scanned-page rendering or OCR fallback
+OCR integration into retrieval or final bidder reports
 coordinate highlighting
 seal/signature authenticity judgment
 certificate authenticity judgment
+online OCR or image upload
 ```
 
 DOCX page numbers must not be fabricated. Only PDF evidence locations may use physical PDF page numbers such as:
