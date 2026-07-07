@@ -1,384 +1,110 @@
-# proposal-point-checker
+# BidDeer Proposal Point Checker
 
-`proposal-point-checker` is the first BidDeer Agent Skill package. It helps reviewers compare a manually prepared CSV checklist against a DOCX or text-layer PDF proposal, locate candidate evidence, and render Markdown or CSV review reports.
+A local, checklist-driven proposal review Skill that helps users compare a proposal document against user-provided check items and produce evidence-based review results for human confirmation.
 
-The package is designed as a human-review assistant. It does not produce final bid rejection, compliance, pass/fail, or risk-level decisions.
+## What It Does
 
-## Current v0.1 Scope
+- Accepts a user-provided checklist of inspection points.
+- Accepts a proposal or bid document (DOCX or text-layer PDF).
+- Checks each checklist item against the proposal content.
+- Returns an evidence excerpt when matching content is found.
+- Returns a source location when available.
+- Assigns a status to each item (found, partially_found, not_found, unclear, not_applicable).
+- Produces a review report for human confirmation.
 
-Supported:
+## What It Does Not Do
 
-- CSV checklist parsing and validation.
-- Single DOCX or text-layer PDF proposal parsing.
-- Recommended unified CLI input using `--proposal` for both DOCX and text-layer PDF.
-- Local PDF text extraction using `pypdf==6.14.2`.
-- Explicit embedded-image export for PDFs using `pypdf` and Pillow.
-- Targeted embedded-image extraction from retrieval candidate pages with
-  checklist and retrieval-context manifest associations.
-- Optional local PaddleOCR image review over already-extracted PDF
-  embedded-image artifacts.
-- `paddleocr-result-v0.1` JSON artifacts and a human-readable
-  `image_ocr_review_report.md` for supplemental manual review.
-- Paragraph, heading, and table-row extraction.
-- Lightweight image-anchor detection.
-- Deterministic candidate evidence retrieval from text, tables, and nearby image-anchor text.
-- Six-status evidence reasoning through a caller-provided adapter.
-- Markdown report aggregation and rendering.
-- CSV report rendering with PDF page-level provenance (e.g. `text_layer_chinese.pdf > 第 1 页`).
+- Does not guarantee that a bid will not be rejected.
+- Does not make automatic bid compliance decisions.
+- Does not make automatic legal judgments.
+- Does not make final pass/fail decisions.
+- Does not verify certificate, seal, or signature authenticity.
+- Does not assess risk levels.
+- Does not replace human review.
 
-Deferred:
+## Inputs
 
-- Scanned or image-only PDF page rendering fallback.
-- OCR integration into evidence retrieval.
-- OCR integration into final bidder reports.
-- Docker/GPU production OCR path.
-- Online image-recognition provider calls and image upload.
-- Rendered page number mapping for DOCX.
-- Real LLM provider implementation.
-- Multi-file proposal package support.
-- Certificate, seal, or signature authenticity judgment.
-- Electronic bidding system field checks.
-- Final compliance, bid rejection, pass/fail, or risk-level output.
+| Input | Format | Required | Description |
+|---|---|---|---|
+| Checklist | CSV or Markdown | Yes | User-provided inspection points. Each item must include an identifier and requirement description. |
+| Proposal | DOCX or text-layer PDF | Yes | The bid or proposal document to be checked against the checklist. |
 
-## Installation
+## Outputs
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/TheRootLab/BidDeer-skills.git
-   ```
+| Output | Format | Description |
+|---|---|---|
+| Review report | Markdown or CSV | Item-by-item check results with status, evidence excerpt, source location, and review notes. |
 
-2. Navigate to the package directory:
-   ```bash
-   cd BidDeer-skills/proposal-point-checker
-   ```
+Each checklist item receives one of the following statuses:
 
-3. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   ```
-
-4. Activate the virtual environment:
-   - For macOS/Linux:
-     ```bash
-     source venv/bin/activate
-     ```
-   - For Windows PowerShell:
-     ```powershell
-     .\venv\Scripts\Activate.ps1
-     ```
-
-5. Install the required dependencies:
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
-
-6. Install development dependencies for smoke tests:
-   ```bash
-   python -m pip install -r requirements-dev.txt
-   ```
-
-7. Verify the package import:
-   ```bash
-   python -c "import biddeer_checker; print('biddeer_checker imported successfully')"
-   ```
-
-8. Verify the CLI help:
-   ```bash
-   python -m biddeer_checker.cli --help
-   ```
-
-9. Run the smoke tests:
-   ```bash
-   python -m pytest smoke_tests/test_cli_smoke.py -v
-   ```
-
-## Runtime Environment
-
-For customer deployment, Agent integration, working-directory rules, virtualenv expectations, path handling, and post-install validation, see [`docs/runtime-environment.md`](docs/runtime-environment.md).
-
-Key rule:
-
-```text
-Use Skill root as cwd. Use absolute task-workspace paths for user inputs and outputs. Treat the Skill directory as read-mostly after installation.
-```
+| Status | Meaning |
+|---|---|
+| `found` | Matching evidence was located in the proposal. |
+| `partially_found` | Partial or related evidence was found but key details are missing. |
+| `not_found` | No matching evidence was located. |
+| `unclear` | The available evidence is ambiguous and needs human review. |
+| `not_applicable` | The check item does not apply to this proposal. |
 
 ## Quick Start
 
-1. Generate a synthetic DOCX file for testing:
-   ```bash
-   python examples/tools/generate_sample_docx.py examples/quickstart/sample_proposal.docx
-   ```
-
-2. Run the `retrieve` stage to extract candidate evidence (recommended using `--proposal`):
-   ```bash
-   python -m biddeer_checker.cli retrieve \
-     --csv "examples/quickstart/sample_checklist.csv" \
-     --proposal "examples/quickstart/sample_proposal.docx" \
-     --out "<absolute_task_workspace>/candidates.json"
-   ```
-
-   Or run using a text-layer PDF:
-   ```bash
-   python -m biddeer_checker.cli retrieve \
-     --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" \
-     --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" \
-     --out "<absolute_task_workspace>/candidates.json"
-   ```
-
-   To extract embedded raster images only from pages selected by retrieval, add
-   `--image-mode targeted`. The command writes
-   `image_evidence_manifest.json` and `images/` beside `candidates.json`:
-   ```bash
-   python -m biddeer_checker.cli retrieve \
-     --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" \
-     --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" \
-     --out "<absolute_task_workspace>/candidates.json" \
-     --image-mode targeted
-   ```
-
-   After image extraction, optionally run local OCR review:
-   ```bash
-   python -m biddeer_checker.cli image-ocr-review \
-     --workspace "<absolute_task_workspace>" \
-     --manifest "<absolute_task_workspace>/image_evidence_manifest.json" \
-     --out "<absolute_task_workspace>/image_ocr_review_report.md" \
-     --device cpu
-   ```
-
-   OCR is optional and requires installing `requirements-ocr.txt`. It runs
-   locally, does not upload PDF or image content, and does not decide pass/fail,
-   risk level, bid rejection, certificate validity, seal authenticity, or
-   signature authenticity. See [`docs/ocr-setup.md`](docs/ocr-setup.md).
-
-   *Note: `--docx` is kept for backward compatibility. New workflows should use `--proposal`.*
-
-3. **External Judgments Required:** `judgments.json` must be prepared externally. This package does not contain a built-in real LLM provider. You must construct or mock `judgments.json` based on the `candidates.json` structure for testing.
-
-4. Run the `report` stage to generate the Markdown report. Markdown remains the default output format:
-   ```bash
-   python -m biddeer_checker.cli report \
-     --candidates "<absolute_task_workspace>/candidates.json" \
-     --judgments "<absolute_task_workspace>/judgments.json" \
-     --out "<absolute_task_workspace>/report.md"
-   ```
-
-5. To generate a CSV report for Excel / WPS manual review, pass `--format csv` explicitly:
-   ```bash
-   python -m biddeer_checker.cli report \
-     --candidates "<absolute_task_workspace>/candidates.json" \
-     --judgments "<absolute_task_workspace>/judgments.json" \
-     --out "<absolute_task_workspace>/report.csv" \
-     --format csv
-   ```
-
-Runtime outputs belong in an external task workspace, not in the Skill directory. For ready-to-run mock judgments and expected outputs, use the full synthetic demos under `examples/demos/`.
-
-## Pipeline
-
-```text
-CSV checklist
--> DOCX or PDF document parsing
--> candidate evidence retrieval
--> evidence reasoning through injected adapter
--> report aggregation
--> Markdown or CSV rendering
-```
-
-The deterministic stages are implemented in the shared `biddeer_checker/` package in this repository. The reasoning stage requires the caller to provide an adapter implementing the current `LLMProviderAdapter` interface.
-
-## Input Contracts
-
-### Checklist CSV
-
-The CSV checklist must include these columns:
-
-```csv
-序号,审核点名称,审核要求,审核说明
-```
-
-Example:
-
-```csv
-序号,审核点名称,审核要求,审核说明
-ITEM-001,项目经理配置要求,须配备1名具备相关高级职称的项目经理。,无
-```
-
-### Proposal Input
-
-The proposal input (supplied via `--proposal`) accepts:
-- **DOCX**: The proposal file must be a readable `.docx` file. WPS documents should be saved as standard Office Open XML `.docx` before processing. The parser extracts text, tables, heading context, and image anchors. It does not read image content.
-- **PDF**: A valid vector/text-layer `.pdf` file. Scanned, encrypted, or
-  image-only PDFs are rejected by targeted retrieval. Explicit image modes can
-  export extractable embedded raster objects, but do not perform OCR, image
-  recognition, page rendering, upload, or signature/seal authenticity
-  verification.
-
-When the input is a text-layer PDF, the generated CSV report's `证据位置` (Evidence Location) column will include the PDF filename and the original 1-based page number, formatted as:
-`text_layer_chinese.pdf > 第 1 页`
-*Note: DOCX inputs do not provide rendered page numbers; page numbers will not be fabricated for DOCX.*
-
-## Evidence Statuses
-
-The reasoning adapter must return one of these exact values:
-
-| Status | Meaning |
-| --- | --- |
-| `CLEAR_EVIDENCE` | Clear matching evidence was found. |
-| `SUSPECTED_EVIDENCE` | Related evidence was found, but manual confirmation is needed. |
-| `CONFLICTING_EVIDENCE` | Evidence appears to conflict with the checklist requirement. |
-| `NOT_FOUND` | No candidate evidence was found. |
-| `INSUFFICIENT_EVIDENCE` | Partial evidence exists, but key information is missing or image-only. |
-| `UNABLE_TO_JUDGE` | The available context cannot support a stable judgment. |
-
-These are evidence states, not final business decisions.
-
-## Python Integration
-
-The current repository exposes the runtime through Python modules under `biddeer_checker/`.
-
-```python
-from biddeer_checker.checklist_model.parser import CSVChecklistParser
-from biddeer_checker.document_parser.proposal_parser_dispatcher import ProposalParserDispatcher
-from biddeer_checker.evidence_retrieval.engine import retrieve_evidence
-from biddeer_checker.evidence_reasoning.engine import ReasoningEngine
-from biddeer_checker.report_renderer.aggregator import ReportAggregator
-from biddeer_checker.report_renderer.csv_renderer import CSVRenderer
-from biddeer_checker.report_renderer.markdown_renderer import MarkdownRenderer
-
-from your_project.adapters import YourLLMProviderAdapter
-
-items, errors = CSVChecklistParser().parse(
-    "examples/quickstart/sample_checklist.csv"
-)
-if errors:
-    raise ValueError(errors)
-
-document = ProposalParserDispatcher().parse("proposal.docx")  # or "proposal.pdf"
-packages = retrieve_evidence(items, document)
-
-engine = ReasoningEngine(adapter=YourLLMProviderAdapter())
-judged_packages = [engine.judge(package) for package in packages]
-
-report = ReportAggregator.aggregate(judged_packages)
-markdown = MarkdownRenderer.render(report)
-csv_report = CSVRenderer.render(report)
-```
-
-The adapter must implement:
-
-```python
-invoke_reasoning(item: ChecklistItem, context_text: str) -> ReasoningResult
-```
-
-See `examples/tools/bridge_adapter_template.py` for a non-functional template. It intentionally does not call any real provider.
-
-## No Built-In Real LLM Provider
-
-v0.1 does not include an OpenAI, Gemini, Claude, or private gateway adapter.
-
-The host application is responsible for:
-
-- Selecting a provider.
-- Managing credentials.
-- Sending prompts or context to the provider.
-- Parsing provider output.
-- Returning a complete `ReasoningResult`.
-
-This keeps the package lightweight and avoids hard-coding model vendors or credentials into the Skill package.
-
-## Split-Step CLI Usage
-
-The implemented split-step CLI is available through the Python module entrypoint:
-
-```bash
-# Recommended unified proposal input:
-python -m biddeer_checker.cli retrieve --csv "examples/quickstart/sample_checklist.csv" --proposal "examples/quickstart/sample_proposal.docx" --out "<absolute_task_workspace>/candidates.json"
-python -m biddeer_checker.cli retrieve --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" --out "<absolute_task_workspace>/candidates.json"
-python -m biddeer_checker.cli retrieve --csv "examples/demos/pdf-basic/inputs/synthetic_checklist.csv" --proposal "examples/demos/pdf-basic/inputs/synthetic_proposal_text_layer.pdf" --out "<absolute_task_workspace>/candidates.json" --image-mode targeted
-python -m biddeer_checker.cli image-ocr-review --workspace "<absolute_task_workspace>" --manifest "<absolute_task_workspace>/image_evidence_manifest.json" --out "<absolute_task_workspace>/image_ocr_review_report.md" --device cpu
-
-# Legacy docx compatibility (kept for backward compatibility):
-python -m biddeer_checker.cli retrieve --csv "examples/quickstart/sample_checklist.csv" --docx "examples/quickstart/sample_proposal.docx" --out "<absolute_task_workspace>/candidates.json"
-
-# Generating reports:
-python -m biddeer_checker.cli report --candidates "<absolute_task_workspace>/candidates.json" --judgments "<absolute_task_workspace>/judgments.json" --out "<absolute_task_workspace>/report.md"
-python -m biddeer_checker.cli report --candidates "<absolute_task_workspace>/candidates.json" --judgments "<absolute_task_workspace>/judgments.json" --out "<absolute_task_workspace>/report.csv" --format csv
-```
-
-No console script entrypoint is currently documented for this package. Use the module form above unless a future packaging stage adds and validates a separate entrypoint.
-
-### `retrieve`
-
-`retrieve` reads a CSV checklist and a DOCX or text-layer PDF proposal, then writes `candidates.json`.
-
-It performs deterministic parsing and candidate evidence retrieval only. It does not call a real LLM and does not perform evidence reasoning.
-
-`--image-mode` accepts:
-
-- `disabled` (default): text-only retrieval; no image manifest and no Pillow
-  requirement at runtime.
-- `exhaustive-export`: export all extractable embedded PDF raster images with
-  `relatedCheckItemId: "UNASSIGNED"`.
-- `targeted`: after text retrieval, export embedded raster images only from
-  candidate PDF pages and associate them with checklist IDs and bounded
-  retrieval context.
-
-Image modes write local artifacts only to the external task workspace. They do
-not perform OCR, image recognition, provider calls, upload, page rendering, or
-authenticity/compliance judgment. For DOCX input, image extraction is skipped
-with a diagnostic while normal text retrieval continues.
-
-Supported formats:
-- **DOCX**: Parses text, tables, headings, and image anchors.
-- **PDF**: Parses text-layer PDFs locally using `pypdf==6.14.2` and extracts
-  physical pages. Image-only (scanned), encrypted, or invalid PDFs are rejected
-  with clear errors. Explicit image modes support embedded raster extraction
-  only. Optional OCR review is a separate `image-ocr-review` command and does
-  not change retrieval output.
-
-### `image-ocr-review`
-
-`image-ocr-review` is an optional local-only review step for embedded-image
-artifacts already written by `retrieve --image-mode targeted` or
-`retrieve --image-mode exhaustive-export`.
-
-It reads `image_evidence_manifest.json`, writes
-`ocr_results/<imageId>.paddleocr.json`, and generates
-`image_ocr_review_report.md`. OCR text is supplemental manual-review material;
-it is not added to candidate retrieval or final bidder reports.
-
-Install `requirements-ocr.txt` before running real PaddleOCR. The default Skill
-installation remains free of PaddleOCR, PaddlePaddle, and PaddleX.
-
-### `report`
-
-`report` reads `candidates.json` and `judgments.json`, then writes a Markdown report by default.
-
-`judgments.json` must be prepared externally by an Agent runtime, a human review process, or a mock workflow. The package does not include a built-in real LLM provider and does not manage provider credentials.
-
-Use `--format csv` to write a CSV report with fixed Chinese columns for Excel / WPS manual review. The CLI does not infer the format from the output file suffix; Markdown remains the default unless `--format csv` is provided.
-
-The generated reports use the six evidence statuses listed above. They must not be treated as final bid rejection, pass/fail, compliance adjudication, or risk-level verdicts.
-
-## Examples
-
-The examples taxonomy is documented in [`examples/README.md`](examples/README.md):
-
-- `examples/quickstart/`: minimal first-use files.
-- `examples/demos/pdf-basic/`: complete synthetic text-layer PDF workflow.
-- `examples/demos/reasoning-status/`: complete six-status reasoning-boundary workflow.
-- `examples/tools/`: DOCX generation helper and external adapter template.
-
-The examples are synthetic and do not use real bidding documents.
-
-## Development Boundary For This Package Stage
-
-Release package documentation updates must not:
-
-- Modify `biddeer_checker/**`.
-- Modify `tests/**`.
-- Add a real LLM provider.
-- Modify CLI implementation or add console script entrypoints.
-- Add scanned-PDF rendering, integrate OCR into retrieval or final reports,
-  broaden image recognition, or add DOCX page mapping.
-- Change fixture semantics or validation assertions.
+This Skill works with an Agent that reads the user's checklist and proposal, then applies the rules in [`SKILL.md`](SKILL.md).
+
+1. **Prepare a checklist** — create a list of inspection points. See [`examples/checklist.md`](examples/checklist.md) for the format.
+2. **Prepare a proposal** — a DOCX or text-layer PDF containing the bid content.
+3. **Load the Skill** into your Agent — the Agent reads [`SKILL.md`](SKILL.md) and follows its behavior rules.
+4. **The Agent inspects each checklist item** against the proposal and returns:
+   - Evidence excerpt when matching content is found
+   - `not_found` when no matching content is found
+   - `partially_found` when only partial evidence exists
+   - `unclear` when evidence is ambiguous
+5. **Review the results** — all output must be confirmed by a human reviewer.
+
+See [`examples/`](examples/) for synthetic sample files that demonstrate the workflow.
+
+## Example
+
+- [`examples/checklist.md`](examples/checklist.md) — sample checklist with 6 inspection items.
+- [`examples/proposal.md`](examples/proposal.md) — synthetic proposal text for testing.
+- [`examples/expected-output.md`](examples/expected-output.md) — expected review output showing all status types.
+
+## Privacy and Local Processing
+
+- All processing is performed locally on your machine.
+- No proposal or checklist content is uploaded to external servers.
+- Public examples use synthetic content only — no real tender documents, customer names, or company data.
+- For real bid documents, use a local or private deployment.
+- See [`docs/privacy.md`](docs/privacy.md) for details.
+
+## Human Review Boundary
+
+This Skill is a **review assistant**, not a decision maker.
+
+- Every check result must be reviewed by a qualified human.
+- Evidence excerpts are provided for reference, not as final judgment.
+- The Skill does not determine whether a bid will be accepted or rejected.
+- The Skill does not determine compliance with tender requirements.
+- The Skill does not authenticate certificates, seals, or signatures.
+- Final confirmation and responsibility remain with the human reviewer.
+
+## Known Limitations
+
+- The Skill does not guarantee bid success or non-rejection.
+- OCR quality depends on document quality and the local runtime.
+- Scanned or image-only PDFs are not supported for text retrieval.
+- The Skill does not verify certificate, seal, or signature authenticity.
+- Ambiguous or missing evidence must be reviewed by humans.
+- See [`docs/limitations.md`](docs/limitations.md) for a full list.
+
+## Roadmap
+
+- [x] DOCX and text-layer PDF proposal parsing
+- [x] CSV checklist parsing
+- [x] Candidate evidence retrieval
+- [x] Markdown and CSV report rendering
+- [x] PDF page-level provenance in CSV reports
+- [x] Embedded PDF image extraction (exhaustive and targeted)
+- [x] Optional local PaddleOCR image review
+- [ ] Real LLM provider integration
+- [ ] Scanned PDF support via OCR
+- [ ] DOCX rendered page number mapping
+- [ ] Multi-file proposal package support
