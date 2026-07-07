@@ -47,38 +47,19 @@ Each checklist item receives one of the following statuses:
 
 ## Quick Start
 
-1. Clone the repository and navigate to the Skill directory:
-   ```bash
-   git clone https://github.com/TheRootLab/BidDeer-skills.git
-   cd BidDeer-skills/proposal-point-checker
-   ```
+This Skill works with an Agent that reads the user's checklist and proposal, then applies the rules in [`SKILL.md`](SKILL.md).
 
-2. Create a virtual environment and install dependencies:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate
-   python -m pip install -r requirements.txt
-   ```
+1. **Prepare a checklist** — create a list of inspection points. See [`examples/checklist.md`](examples/checklist.md) for the format.
+2. **Prepare a proposal** — a DOCX or text-layer PDF containing the bid content.
+3. **Load the Skill** into your Agent — the Agent reads [`SKILL.md`](SKILL.md) and follows its behavior rules.
+4. **The Agent inspects each checklist item** against the proposal and returns:
+   - Evidence excerpt when matching content is found
+   - `not_found` when no matching content is found
+   - `partially_found` when only partial evidence exists
+   - `unclear` when evidence is ambiguous
+5. **Review the results** — all output must be confirmed by a human reviewer.
 
-3. Prepare a checklist (see [`examples/checklist.md`](examples/checklist.md)) and a proposal document.
-
-4. Run the retrieval stage:
-   ```bash
-   python -m biddeer_checker.cli retrieve \
-     --csv "examples/checklist.csv" \
-     --proposal "examples/proposal.docx" \
-     --out "<your_output_dir>/candidates.json"
-   ```
-
-5. Apply external judgments and render the report:
-   ```bash
-   python -m biddeer_checker.cli report \
-     --candidates "<your_output_dir>/candidates.json" \
-     --judgments "<your_output_dir>/judgments.json" \
-     --out "<your_output_dir>/report.md"
-   ```
-
-See [`examples/`](examples/) for synthetic sample files.
+See [`examples/`](examples/) for synthetic sample files that demonstrate the workflow.
 
 ## Example
 
