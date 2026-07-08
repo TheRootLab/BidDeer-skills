@@ -23,7 +23,8 @@ This demo is intended for Agent runtime smoke validation. It allows an Agent run
 
 | File | Description |
 |---|---|
-| `inputs/synthetic_image_checklist.md` | Synthetic checklist with 6 items, 2 requiring image-based evidence. |
+| `inputs/synthetic_image_checklist.csv` | Primary CSV checklist input for runtime smoke validation. |
+| `inputs/synthetic_image_checklist.md` | Human-readable checklist preview. |
 | `inputs/synthetic_image_proposal.pdf` | Multi-page synthetic proposal PDF with embedded synthetic service card image. |
 | `inputs/source-assets/after_sales_card.png` | Synthetic service card image embedded in the PDF. |
 | `inputs/source-assets/asset-notes.md` | Notes about the synthetic image asset. |

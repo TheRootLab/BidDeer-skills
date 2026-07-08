@@ -4,14 +4,15 @@ This runbook describes how to use the image-review synthetic smoke demo with an 
 
 ## Inputs
 
-- `inputs/synthetic_image_checklist.md`
-- `inputs/synthetic_image_proposal.pdf`
-- `expected/expected-output.md`
+- Primary runtime input: `inputs/synthetic_image_checklist.csv`
+- Human-readable preview: `inputs/synthetic_image_checklist.md`
+- Proposal PDF: `inputs/synthetic_image_proposal.pdf`
+- Expected output: `expected/expected-output.md`
 
 ## Agent Instructions
 
 1. Load `proposal-point-checker/SKILL.md`.
-2. Read `inputs/synthetic_image_checklist.md`.
+2. Read `inputs/synthetic_image_checklist.csv`.
 3. Inspect `inputs/synthetic_image_proposal.pdf`.
 4. Produce item-by-item results with:
    - `check_id`
