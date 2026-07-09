@@ -10,12 +10,12 @@ The output includes `found`, `partially_found`, `not_found`, and `unclear` statu
 
 | Check ID | Check Item | Status | Evidence Excerpt | Source Location | Notes |
 |---|---|---|---|---|---|
-| PIC-001 | 营业执照注册资本 | found | "注册资本：人民币壹佰万元（演示）" | Appendix A / embedded business license image | Visible registered capital is RMB 1,000,000, which satisfies the >= 100万元 threshold. Human review should confirm OCR/image reading. No business license authenticity judgment is made. |
-| PIC-002 | 项目管理证书获得日期 | not_found | "培训日期：2026-07-08" | Appendix B / embedded project management training certificate image | The visible training/certificate date is 2026-07-08, which is not more than 1 year before the demo review date 2026-07-08 (threshold: 2025-07-08). It is the same date as the review date. Human review should confirm OCR/date reading. No certificate authenticity judgment is made. |
-| TXT-001 | 项目经理任命说明 | found | "The project manager for this project is appointed as Zhang San" | Section 2 | Text evidence found. |
-| TXT-002 | 保密承诺 | unclear | "We will follow customer requirements regarding confidential information." | Section 4 | Wording is ambiguous; human review needed. |
-| TXT-003 | 培训计划 | partially_found | "Training materials will be provided for end users. Basic operation training will cover system login and core features." | Section 5 | Training materials and basic training are mentioned, but no detailed training plan or schedule is provided. |
-| TXT-004 | 交付进度计划 | not_found | — | — | No delivery schedule with milestones was found. A formal delivery schedule is stated as to be coordinated during project planning. |
+| PIC-001 | 营业执照注册资本 | found | "注册资本：人民币壹佰万元" | 附件 A / 营业执照图片 | 图片中可见注册资本为人民币壹佰万元，即人民币 100 万元，满足不低于 100 万元的演示阈值。仅做 OCR/图片可见文字读取与金额比较，不验证营业执照真实性。 |
+| PIC-002 | 项目管理证书获得日期 | not_found | "培训日期：2026-07-08" | 附件 B / 项目管理培训证书图片 | 演示审核日期为 2026-07-08，图片中可见培训日期同为 2026-07-08，不早于审核日期一年以上，因此不满足"获得日期大于 1 年"的演示检查要求。仅做 OCR/图片可见文字读取与日期比较，不验证证书真实性。 |
+| TXT-001 | 项目经理任命说明 | found | "本项目任命张三作为项目经理，负责项目组织、沟通协调、进度跟踪和问题闭环。" | 第 2 节：项目管理 | 文本证据明确说明项目经理任命。 |
+| TXT-002 | 保密承诺 | unclear | "我方将按照客户要求处理与保密信息相关的事项。" | 第 4 节：保密承诺 | 表述为原则性、后续协商型说明，未形成完整明确的保密责任、期限、销毁和违约约定，因此归类为 unclear。 |
+| TXT-003 | 培训计划 | partially_found | "我方将为最终用户提供培训材料……后续可根据客户需要安排补充培训，但具体培训批次、培训时长、课程大纲、考核方式和详细排期需在项目实施阶段进一步确认。" | 第 5 节：培训计划 | 提供了培训材料和基础培训范围，但缺少详细培训批次、时长、课程大纲、考核方式和排期，因此归类为 partially_found。 |
+| TXT-004 | 交付进度计划 | not_found | "本文件当前未提供明确的阶段划分、里程碑日期、阶段验收节点或最终交付时间表。" | 第 6 节：交付计划 | 文档明确说明未提供正式交付进度计划和里程碑，因此归类为 not_found。 |
 
 ## Status Coverage
 

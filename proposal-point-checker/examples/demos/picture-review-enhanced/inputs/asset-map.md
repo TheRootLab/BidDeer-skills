@@ -21,17 +21,19 @@ proposal-point-checker/examples/demos/pictures/
 
 | Field | Visible Value |
 |---|---|
-| 名称 (Name) | ACME Tech Solutions Co., Ltd. |
-| 统一社会信用代码 (USCC) | DEMO-91310000-2026-0001 |
-| 类型 (Type) | 有限责任公司（演示样例） |
-| 住所 (Address) | 北京市朝阳区演示路 100 号 |
-| 法定代表人 (Legal Rep) | 张三 |
-| 注册资本 (Reg Capital) | 人民币壹佰万元（演示） |
-| 成立日期 (Est Date) | 2026-07-08 |
-| 营业期限 (Term) | 长期（演示） |
-| 经营范围 (Scope) | 项目管理培训、演示测试、OCR 验证用途，不代表真实经营许可。 |
+| 标题 | 营业执照 |
+| 统一社会信用代码 | 91110000MA0000000X |
+| 名称 | 神鹿测试科技有限公司 |
+| 类型 | 有限责任公司（自然人投资或控股） |
+| 法定代表人 | 合成示例人员 C |
+| 注册资本 | 人民币壹佰万元 |
+| 成立日期 | 2020年01月15日 |
+| 营业期限 | 2020年01月15日 至 长期 |
+| 住所 | 北京市海淀区中关村合成路100号 |
+| 登记机关 | 北京市合成市场监督管理局 |
+| 登记日期 | 2025年12月01日 |
 
-All values are synthetic/demo. This is not a real business license.
+这些图片均为合成演示材料，不代表真实执照、真实证书、真实登记、真实资质或官方认证。
 
 ## Project Management Training Certificate Image
 
@@ -44,10 +46,13 @@ All values are synthetic/demo. This is not a real business license.
 
 | Field | Visible Value |
 |---|---|
-| 颁发机构 (Issuer) | ACME Project Academy |
-| 学员姓名 (Trainee) | 张三 |
-| 培训项目 (Program) | 项目管理基础培训 |
-| 培训日期 (Training Date) | 2026-07-08 |
-| 证书编号 (Cert No) | DEMO-PM-2026-0001 |
+| 标题 | 项目管理培训证书 |
+| 证书编号 | BD-PM-TRAIN-2026-001 |
+| 持证人 | 张三 |
+| 培训课程 | 项目管理基础与实践 |
+| 培训日期 | 2026-07-08 |
+| 培训机构 | 合成项目管理办法测试中心 |
+| 证书状态 | 已完成 |
+| 签发日期 | 2026-07-08 |
 
-All values are synthetic/demo. This is not a real certificate.
+这些图片均为合成演示材料，不代表真实执照、真实证书、真实登记、真实资质或官方认证。
