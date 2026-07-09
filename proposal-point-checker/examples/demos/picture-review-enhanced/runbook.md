@@ -25,6 +25,19 @@ Asset map (image field reference):
 Expected output reference:
 - `expected/expected-output.md`
 
+## Chinese-First Demo Notes
+
+- This demo is Chinese-first.
+- The PDF is an 8-page synthetic Chinese proposal document.
+- Pages 1–6 are dense Chinese proposal-style pages.
+- Page 7 embeds the synthetic business license image.
+- Page 8 embeds the synthetic project management training certificate image.
+- The demo validates picture/OCR evidence, numeric threshold comparison, and date comparison.
+- The demo does not validate OCR accuracy.
+- The demo does not verify business license authenticity.
+- The demo does not verify certificate authenticity.
+- Final confirmation remains with the human reviewer.
+
 ## Agent Instructions
 
 1. Load `proposal-point-checker/SKILL.md`.
@@ -86,9 +99,10 @@ Final confirmation must remain with the human reviewer.
 
 All content in this demo is synthetic. It uses:
 
-- Company: ACME Tech Solutions Co., Ltd. (fictitious)
-- USCC: DEMO-91310000-2026-0001 (synthetic)
-- Certificate No: DEMO-PM-2026-0001 (synthetic)
+- Company: 神鹿测试科技有限公司 (fictitious)
+- USCC: 91110000MA0000000X (synthetic)
+- Certificate No: BD-PM-TRAIN-2026-001 (synthetic)
+- Project manager: 张三 (fictitious)
 - No real business licenses, certificates, seals, signatures, or personal information.
 
 ## Related
