@@ -21,6 +21,19 @@ The fixed demo review date is **2026-07-08**.
 
 For PIC-002, the certificate obtained date must be earlier than or equal to 2025-07-08 to satisfy the "more than 1 year" rule.
 
+## Chinese-First Demo
+
+- This demo is Chinese-first.
+- The PDF is an 8-page synthetic Chinese proposal document.
+- Pages 1–6 are dense Chinese proposal-style pages.
+- Page 7 embeds the synthetic business license image.
+- Page 8 embeds the synthetic project management training certificate image.
+- The demo validates picture/OCR evidence, numeric threshold comparison, and date comparison.
+- The demo does not validate OCR accuracy.
+- The demo does not verify business license authenticity.
+- The demo does not verify certificate authenticity.
+- Final confirmation remains with the human reviewer.
+
 ## What This Demo Does Not Prove
 
 - This demo does not prove OCR accuracy.
@@ -36,7 +49,7 @@ For PIC-002, the certificate obtained date must be earlier than or equal to 2025
 |---|---|
 | `inputs/enhanced_checklist.csv` | Primary CSV checklist input for runtime smoke validation. |
 | `inputs/enhanced_checklist.md` | Human-readable checklist preview. |
-| `inputs/enhanced_proposal.pdf` | Multi-page synthetic proposal PDF with embedded business license and training certificate images. |
+| `inputs/enhanced_proposal.pdf` | 8-page synthetic Chinese proposal PDF with embedded business license and training certificate images. |
 | `inputs/asset-map.md` | Maps source images to their purpose and visible fields. |
 | `expected/expected-output.md` | Expected item-by-item output for smoke validation. |
 | `runbook.md` | Agent runtime runbook for running the demo. |
@@ -54,9 +67,10 @@ All images are synthetic/demo only. See `inputs/asset-map.md` for detailed field
 
 All content in this demo is synthetic. It uses fictitious names, numbers, and entities:
 
-- Company name: ACME Tech Solutions Co., Ltd.
-- USCC: DEMO-91310000-2026-0001
-- Certificate No: DEMO-PM-2026-0001
+- Company name: 神鹿测试科技有限公司
+- USCC: 91110000MA0000000X
+- Certificate No: BD-PM-TRAIN-2026-001
+- Project manager: 张三
 - No real business licenses, certificates, seals, signatures, or personal information.
 
 ## Boundaries
