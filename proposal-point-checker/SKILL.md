@@ -61,26 +61,17 @@ Implementation guidance:
 - JavaScript/Node.js: prepend `\ufeff` before writing the CSV string.
 - Keep Markdown, JSON, and plain text outputs as normal UTF-8 unless a specific consumer requires otherwise.
 
-For Python CSV generation, use:
+For Python CSV generation, use the existing `CSVRenderer` which returns CSV text without BOM, then write the file with `utf-8-sig`:
 
 ```python
-import csv
+from biddeer_checker.report_renderer.csv_renderer import CSVRenderer
 
-with open(output_path, "w", encoding="utf-8-sig", newline="") as f:
-    writer = csv.DictWriter(
-        f,
-        fieldnames=[
-            "check_id",
-            "check_item",
-            "status",
-            "evidence_excerpt",
-            "source_location",
-            "notes",
-        ],
-    )
-    writer.writeheader()
-    writer.writerows(rows)
+rendered = CSVRenderer.render(report)
+with open(output_path, "w", encoding="utf-8-sig", newline="") as file:
+    file.write(rendered)
 ```
+
+The real CSV column headers are `序号`, `审核点名称`, `审核要求`, `检查结果`, `结论说明`, `证据位置`, and `证据摘录`. These are defined in `CSVRenderer.CSV_HEADERS`.
 
 Validation guidance:
 
