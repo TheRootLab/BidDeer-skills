@@ -45,6 +45,52 @@ Forbidden:
 | `source_location` | Location within the proposal (section, page) when available |
 | `notes` | Additional context or instructions for the human reviewer |
 
+## CSV Output Encoding
+
+When producing CSV files that contain Chinese text, the CSV file MUST be written as UTF-8 with BOM.
+
+Reason:
+
+- Chinese Windows Excel/WPS may open CSV files using the local system encoding, such as GBK or GB18030, when no BOM is present.
+- UTF-8 without BOM may display Chinese characters as garbled text in Excel/WPS.
+- UTF-8 with BOM allows Excel/WPS to correctly detect the file as UTF-8.
+
+Implementation guidance:
+
+- Python: use `encoding="utf-8-sig"` when writing CSV files.
+- JavaScript/Node.js: prepend `\ufeff` before writing the CSV string.
+- Keep Markdown, JSON, and plain text outputs as normal UTF-8 unless a specific consumer requires otherwise.
+
+For Python CSV generation, use:
+
+```python
+import csv
+
+with open(output_path, "w", encoding="utf-8-sig", newline="") as f:
+    writer = csv.DictWriter(
+        f,
+        fieldnames=[
+            "check_id",
+            "check_item",
+            "status",
+            "evidence_excerpt",
+            "source_location",
+            "notes",
+        ],
+    )
+    writer.writeheader()
+    writer.writerows(rows)
+```
+
+Validation guidance:
+
+```python
+from pathlib import Path
+
+data = Path(output_path).read_bytes()
+assert data.startswith(b"\xef\xbb\xbf"), "CSV output must include UTF-8 BOM"
+```
+
 ## Rules
 
 - Never invent evidence.
@@ -54,6 +100,7 @@ Forbidden:
 - Keep final confirmation with the human reviewer.
 - When evidence is ambiguous, return `unclear` and explain why.
 - When only partial evidence exists, return `partially_found` and note what is missing.
+- When exporting Chinese review results as CSV, use UTF-8 with BOM so the file opens correctly in Windows Excel/WPS.
 
 ## Hard Boundaries
 
