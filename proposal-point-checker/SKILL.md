@@ -45,6 +45,43 @@ Forbidden:
 | `source_location` | Location within the proposal (section, page) when available |
 | `notes` | Additional context or instructions for the human reviewer |
 
+## CSV Output Encoding
+
+When producing CSV files that contain Chinese text, the CSV file MUST be written as UTF-8 with BOM.
+
+Reason:
+
+- Chinese Windows Excel/WPS may open CSV files using the local system encoding, such as GBK or GB18030, when no BOM is present.
+- UTF-8 without BOM may display Chinese characters as garbled text in Excel/WPS.
+- UTF-8 with BOM allows Excel/WPS to correctly detect the file as UTF-8.
+
+Implementation guidance:
+
+- Python: use `encoding="utf-8-sig"` when writing CSV files.
+- JavaScript/Node.js: prepend `\ufeff` before writing the CSV string.
+- Keep Markdown, JSON, and plain text outputs as normal UTF-8 unless a specific consumer requires otherwise.
+
+For Python CSV generation, use the existing `CSVRenderer` which returns CSV text without BOM, then write the file with `utf-8-sig`:
+
+```python
+from biddeer_checker.report_renderer.csv_renderer import CSVRenderer
+
+rendered = CSVRenderer.render(report)
+with open(output_path, "w", encoding="utf-8-sig", newline="") as file:
+    file.write(rendered)
+```
+
+The real CSV column headers are `序号`, `审核点名称`, `审核要求`, `检查结果`, `结论说明`, `证据位置`, and `证据摘录`. These are defined in `CSVRenderer.CSV_HEADERS`.
+
+Validation guidance:
+
+```python
+from pathlib import Path
+
+data = Path(output_path).read_bytes()
+assert data.startswith(b"\xef\xbb\xbf"), "CSV output must include UTF-8 BOM"
+```
+
 ## Rules
 
 - Never invent evidence.
@@ -54,6 +91,7 @@ Forbidden:
 - Keep final confirmation with the human reviewer.
 - When evidence is ambiguous, return `unclear` and explain why.
 - When only partial evidence exists, return `partially_found` and note what is missing.
+- When exporting Chinese review results as CSV, use UTF-8 with BOM so the file opens correctly in Windows Excel/WPS.
 
 ## Hard Boundaries
 
